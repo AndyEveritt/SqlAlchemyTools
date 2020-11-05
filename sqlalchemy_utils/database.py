@@ -21,8 +21,6 @@ class Database:
     def initialise(self, database_file='sqlite://', temp_db=False):
         """
         Link sqlalchemy to a database
-
-        Note: The database engine can only be accessed in the thread that created it
         """
         if temp_db:
             # Creates a database in memory. It will disappear once Python stops
@@ -39,9 +37,11 @@ class Database:
         self.Session = scoped_session(self._sessionmaker)
 
     def register_model(self, model: Base):
+        """ Add a single model to the database """
         setattr(self, model.__name__, model)
 
     def register_models(self, models: List[Base]):
+        """ Add list of models to the database. This must be done before running `initialise()` """
         for model in models:
             self.register_model(model)
 
@@ -63,6 +63,7 @@ class Database:
         self.Session.commit()
 
     def get_query(self, model: Base, params: Dict = {}):
+        """ Returns a query object that can be further filtered """
         return self.Session.query(model).filter_by(**params)
 
     def get_all(self, model: Base, params: Dict = {}):
@@ -114,10 +115,17 @@ class Database:
             raise
 
     def bulk_insert(self, model, mappings: List[Dict], **kwargs):
+        """
+        Insert a list of dicts to the database.
+        
+        Not as fast as `insert_dataframe()` but can be faster than converting list to DataFrame then inserting
+        """
         return self.Session.bulk_insert_mappings(model, mappings, **kwargs)
 
     def insert_dataframe(self, model, df: pd.DataFrame):
+        """ Insert a Pandas dataframe into the database (fast) """
         return df.to_sql(model.__tablename__, con=self.engine, if_exists='append', index=False)
 
     def merge_obj(self, obj):
+        """ Returns the input obj after merging it into the current thread """
         return self.Session.merge(obj)
