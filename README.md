@@ -1,10 +1,10 @@
-# SqlAlchemy_Utils
-SqlAlchemy_Utils is a tool that provides similar functionality to Flask_SqlAlchemy without being dependant on Flask.
+# SqlAlchemy-Tools
+SqlAlchemy_Tools is a tool that provides similar functionality to Flask_SqlAlchemy without being dependant on Flask.
 
 # Installation
-Install SqlAlchemy_Utils with pip:
+Install SqlAlchemy-Tools with pip:
 ```
-pip install sqlalchemy_utils
+pip install sqlalchemy-tools
 ```
 
 # Features
@@ -21,7 +21,7 @@ from sqlalchemy import (Column, String, Integer, ForeignKey)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import UniqueConstraint
 
-from sqlalchemy_utils import Database
+from sqlalchemy_tools import Database
 
 db = Database('sqlite:///tmp.db')
 

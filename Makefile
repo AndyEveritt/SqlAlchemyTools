@@ -8,9 +8,7 @@ verbosity=1
 # `bumpversion --tag release
 
 update_dist:
-ifneq ("$(wildcard $(dist/))", "")
 	rm dist/*
-endif
 	python setup.py sdist bdist_wheel
 
 check_dist:

@@ -1,5 +1,4 @@
 from sqlalchemy.orm.exc import MultipleResultsFound
-from sqlalchemy_utils import Database
 from sqlalchemy import (
     Column,
     String,
@@ -8,6 +7,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import UniqueConstraint
+
+from sqlalchemy_tools import Database
 
 
 db = Database('sqlite:///tmp.db')
