@@ -14,33 +14,36 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy_repr import RepresentableBase
 
 
-Base = declarative_base(cls=RepresentableBase)
-
-
 class Database:
-    def initialise(self, database_file='sqlite://', temp_db=False):
+    def __init__(self, database_file='sqlite://'):
         """
         Link sqlalchemy to a database
         """
-        if temp_db:
-            # Creates a database in memory. It will disappear once Python stops
-            os.remove('tmp.db') if os.path.exists('tmp.db') else None
-            self.engine = db.create_engine('sqlite:///tmp.db')
-            Base.metadata.create_all(self.engine)
-        else:
-            self.engine = db.create_engine(database_file)
-
+        self.engine = db.create_engine(database_file)
         logging.info(f'Database engine: {self.engine}')
 
         self._sessionmaker = sessionmaker(bind=self.engine)
-
         self.Session = scoped_session(self._sessionmaker)
 
-    def register_model(self, model: Base):
-        """ Add a single model to the database """
+        self.Base = RepresentableBase
+        self.Base.metadata.create_all(self.engine)
+        pass
+
+    @property
+    def Base(self):
+        return self._Base
+    
+    @Base.setter
+    def Base(self, base_class):
+        self._Base = declarative_base(cls=base_class)
+        self._Base.query = self.Session.query_property()
+        pass
+
+    def register_model(self, model):
+        """ (Not required) Add a single model to the database to allow for single imports """
         setattr(self, model.__name__, model)
 
-    def register_models(self, models: List[Base]):
+    def register_models(self, models):
         """ Add list of models to the database. This must be done before running `initialise()` """
         for model in models:
             self.register_model(model)
