@@ -9,13 +9,13 @@ from sqlalchemy import (Column, DateTime, Float, ForeignKey, Integer, String,
                         Text, and_, func, or_)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, scoped_session, sessionmaker, class_mapper
+from sqlalchemy.orm import relationship, scoped_session, sessionmaker, make_transient
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound, UnmappedClassError
 from sqlalchemy_repr import RepresentableBase
 
 
 class Database:
-    def __init__(self, database_file='sqlite://'):
+    def __init__(self, database_file='sqlite://', base_class=RepresentableBase):
         """
         Link sqlalchemy to a database
         """
@@ -25,7 +25,7 @@ class Database:
         self._sessionmaker = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self._sessionmaker)
 
-        self.Base = RepresentableBase
+        self.Base = base_class
         pass
 
     @property
@@ -128,6 +128,10 @@ class Database:
         """
         return self.Session.bulk_insert_mappings(model, mappings, **kwargs)
 
+    def get_dataframe(self, model: Base, params: Dict):
+        query = self.get_query(model, params)
+        return pd.read_sql(query.statement, query.session.bind)
+
     def insert_dataframe(self, model, df: pd.DataFrame):
         """ Insert a Pandas dataframe into the database (fast) """
         return df.to_sql(model.__tablename__, con=self.engine, if_exists='append', index=False)
@@ -135,3 +139,23 @@ class Database:
     def merge_obj(self, obj):
         """ Returns the input obj after merging it into the current thread """
         return self.Session.merge(obj)
+    
+    def is_valid(self, obj, pk: str = 'id') -> bool:
+        """ Takes an sqlalchemy orm object and will return True if it is valid """
+        try:
+            self.Session.add(obj)
+            self.Session.commit()   # will raise IntegrityError if not valid
+
+            # tidy up database
+            self.Session.delete(obj)
+            self.Session.commit()
+
+            # make obj useable again
+            make_transient(obj)
+            setattr(obj, pk, None)
+            return True
+        except IntegrityError:
+            # make Session useable again
+            self.Session.rollback()
+            return False
+
