@@ -1,5 +1,5 @@
 from sqlalchemy.orm.exc import MultipleResultsFound
-from sqlalchemy_utils import Database, Base
+from sqlalchemy_utils import Database
 from sqlalchemy import (
     Column,
     String,
@@ -10,7 +10,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import UniqueConstraint
 
 
-class User(Base):
+db = Database('sqlite:///tmp.db')
+
+
+class User(db.Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -19,7 +22,7 @@ class User(Base):
     addresses = relationship('Address', back_populates='user')
 
 
-class Address(Base):
+class Address(db.Base):
     __tablename__ = 'addresses'
     id = Column(Integer, primary_key=True)
     email_address = Column(String, nullable=False)
@@ -27,12 +30,14 @@ class Address(Base):
     user = relationship("User", back_populates="addresses")
 
 
-db = Database()
-db.register_models([User, Address])
-db.initialise(temp_db=True)
+
+
+db.create_all_metadata()    # only required if not using alembic or using a database in memory
+# db.register_models([User, Address])
 
 u1 = User(name='Dave', fullname='Dave Smith', nickname='Davo')
 u2 = User(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
 db.save([u1, u2])
 
-u3 = db.get_or_create(db.User, {'name': 'Simon'})
+u3 = db.get_or_create(User, {'name': 'Simon'})
+pass

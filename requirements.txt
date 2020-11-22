@@ -1,0 +1,3 @@
+sqlalchemy
+sqlalchemy-repr
+pandas

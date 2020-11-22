@@ -1,1 +1,3 @@
-from .database import Database, Base
+__version__ = "0.0.1"
+
+from .database import Database
