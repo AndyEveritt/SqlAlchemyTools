@@ -10,11 +10,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import UniqueConstraint
 
 
-db = Database()
-Base = db.Base
+db = Database('sqlite:///tmp.db')
 
 
-class User(Base):
+class User(db.Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -23,7 +22,7 @@ class User(Base):
     addresses = relationship('Address', back_populates='user')
 
 
-class Address(Base):
+class Address(db.Base):
     __tablename__ = 'addresses'
     id = Column(Integer, primary_key=True)
     email_address = Column(String, nullable=False)
@@ -33,7 +32,7 @@ class Address(Base):
 
 
 
-db.create_all_metadata()
+db.create_all_metadata()    # only required if not using alembic or using a database in memory
 # db.register_models([User, Address])
 
 u1 = User(name='Dave', fullname='Dave Smith', nickname='Davo')
