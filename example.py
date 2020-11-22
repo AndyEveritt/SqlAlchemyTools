@@ -33,10 +33,12 @@ class Address(Base):
 
 
 
+db.create_all_metadata()
 # db.register_models([User, Address])
 
 u1 = User(name='Dave', fullname='Dave Smith', nickname='Davo')
 u2 = User(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
 db.save([u1, u2])
 
-u3 = db.get_or_create(db.User, {'name': 'Simon'})
+u3 = db.get_or_create(User, {'name': 'Simon'})
+pass

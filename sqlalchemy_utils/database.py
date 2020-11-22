@@ -9,8 +9,8 @@ from sqlalchemy import (Column, DateTime, Float, ForeignKey, Integer, String,
                         Text, and_, func, or_)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, scoped_session, sessionmaker
-from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy.orm import relationship, scoped_session, sessionmaker, class_mapper
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound, UnmappedClassError
 from sqlalchemy_repr import RepresentableBase
 
 
@@ -26,7 +26,6 @@ class Database:
         self.Session = scoped_session(self._sessionmaker)
 
         self.Base = RepresentableBase
-        self.Base.metadata.create_all(self.engine)
         pass
 
     @property
@@ -34,10 +33,14 @@ class Database:
         return self._Base
     
     @Base.setter
-    def Base(self, base_class):
-        self._Base = declarative_base(cls=base_class)
-        self._Base.query = self.Session.query_property()
-        pass
+    def Base(self, base_class, **kwargs):
+        Base = declarative_base(cls=base_class, **kwargs)
+        Base.query = self.Session.query_property()
+        self._Base = Base
+
+    def create_all_metadata(self):
+        """ Create table metadata. Must be called after tables are defined  """
+        self.Base.metadata.create_all(self.engine)
 
     def register_model(self, model):
         """ (Not required) Add a single model to the database to allow for single imports """
@@ -48,11 +51,11 @@ class Database:
         for model in models:
             self.register_model(model)
 
-    def create_new_session(self):
+    def create_new_session(self, **kwargs):
         """ Create a new session (database transaction) """
         self.Session.remove()
-        self.Session = self._sessionmaker()
-        self.query = self.Session.query
+        self.Session = scoped_session(self._sessionmaker, **kwargs)
+        return self.Session
 
     def save(self, data: List):
         """ Commit an array of objects to the database """
@@ -65,11 +68,11 @@ class Database:
             self.Session.add(obj)
         self.Session.commit()
 
-    def get_query(self, model: Base, params: Dict = {}):
+    def get_query(self, model, params: Dict = {}):
         """ Returns a query object that can be further filtered """
         return self.Session.query(model).filter_by(**params)
 
-    def get_all(self, model: Base, params: Dict = {}):
+    def get_all(self, model, params: Dict = {}):
         """
         Return all results from a model. It will optionally filter based on a `params` dict.
         The keys of `params` must be the same as the column names to filter in the model.
@@ -79,7 +82,7 @@ class Database:
 
         return results
 
-    def get_one(self, model: Base, params: Dict = {}):
+    def get_one(self, model, params: Dict = {}):
         """
         Return one results from a model. It will optionally filter based on a `params` dict.
         The keys of `params` must be the same as the column names to filter in the model.
@@ -89,7 +92,7 @@ class Database:
 
         return results
 
-    def get_or_create(self, model: Base, params: Dict):
+    def get_or_create(self, model, params: Dict):
         """
         Return a single result from a model that matches a `params` dict.
         The keys of `params` must be the same as the column names to filter in the model.
@@ -105,7 +108,7 @@ class Database:
 
         return result
 
-    def create(self, model: Base, params: Dict):
+    def create(self, model, params: Dict):
         """
         Creates a new object and commits to database.
         For efficiency it is recommended not to use this for bulk inserts
