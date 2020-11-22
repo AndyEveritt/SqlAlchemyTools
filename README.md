@@ -32,7 +32,7 @@ class User(db.Base):
 
 
 db.create_all_metadata()    # only required if not using alembic or using a database in memory
-# db.register_models([User, Address])   # optional to allow for single imports, allows models to be accessed as `db.User`
+# db.register_model(User)   # optional to allow for single imports, allows models to be accessed as `db.User`
 
 u1 = User(name='Dave', fullname='Dave Smith', nickname='Davo')
 u2 = User(name='Dave', fullname='Dave Owen', nickname='Dav Machine')

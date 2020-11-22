@@ -1,3 +1,3 @@
-__version__ = "0.0.1-b0"
+__version__ = "0.0.1-b1"
 
 from .database import Database
