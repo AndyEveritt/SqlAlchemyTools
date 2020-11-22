@@ -1,12 +1,5 @@
-from sqlalchemy.orm.exc import MultipleResultsFound
-from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    ForeignKey,
-)
+from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql.schema import UniqueConstraint
 
 from sqlalchemy_tools import Database
 
@@ -41,4 +34,5 @@ u2 = User(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
 db.save([u1, u2])
 
 u3 = db.get_or_create(User, {'name': 'Simon'})
+User.query.all()
 pass
