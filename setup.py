@@ -14,9 +14,11 @@ setup(
     packages=find_packages(),
 
     install_requires=[
-        'sqlalchemy',
-        'sqlalchemy-repr',
-        'pandas',
+        "sqlalchemy==1.3.20",
+        "sqlalchemy-repr==0.0.2",
+        "pandas==1.1.4",
+        "flask-wtf==0.14.3",
+        "wtforms_alchemy==0.17.0",
     ],
 
     author="Andy Everitt",
