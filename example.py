@@ -1,13 +1,14 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from sqlalchemy_tools import Database
+from sqlalchemy_tools import Database, ActiveAlchemy
 
 
-db = Database('sqlite:///tmp.db')
+# db = Database('sqlite:///tmp.db')
+db = ActiveAlchemy('sqlite://')
 
 
-class User(db.Base):
+class User(db.BaseModel):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -16,7 +17,7 @@ class User(db.Base):
     addresses = relationship('Address', back_populates='user')
 
 
-class Address(db.Base):
+class Address(db.BaseModel):
     __tablename__ = 'addresses'
     id = Column(Integer, primary_key=True)
     email_address = Column(String, nullable=False)
@@ -24,10 +25,7 @@ class Address(db.Base):
     user = relationship("User", back_populates="addresses")
 
 
-
-
-db.create_all_metadata()    # only required if not using alembic or using a database in memory
-# db.register_models([User, Address])
+db.create_all()    # only required if not using alembic or using a database in memory
 
 u1 = User(name='Dave', fullname='Dave Smith', nickname='Davo')
 u2 = User(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
