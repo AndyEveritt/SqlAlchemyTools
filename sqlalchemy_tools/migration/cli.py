@@ -1,18 +1,18 @@
 import click
 from flask.cli import with_appcontext
-from flask_migrate import init as _init
-from flask_migrate import revision as _revision
-from flask_migrate import migrate as _migrate
-from flask_migrate import edit as _edit
-from flask_migrate import merge as _merge
-from flask_migrate import upgrade as _upgrade
-from flask_migrate import downgrade as _downgrade
-from flask_migrate import show as _show
-from flask_migrate import history as _history
-from flask_migrate import heads as _heads
-from flask_migrate import branches as _branches
-from flask_migrate import current as _current
-from flask_migrate import stamp as _stamp
+from sqlalchemy_tools.migration import init as _init
+from sqlalchemy_tools.migration import revision as _revision
+from sqlalchemy_tools.migration import migrate as _migrate
+from sqlalchemy_tools.migration import edit as _edit
+from sqlalchemy_tools.migration import merge as _merge
+from sqlalchemy_tools.migration import upgrade as _upgrade
+from sqlalchemy_tools.migration import downgrade as _downgrade
+from sqlalchemy_tools.migration import show as _show
+from sqlalchemy_tools.migration import history as _history
+from sqlalchemy_tools.migration import heads as _heads
+from sqlalchemy_tools.migration import branches as _branches
+from sqlalchemy_tools.migration import current as _current
+from sqlalchemy_tools.migration import stamp as _stamp
 
 
 @click.group()
