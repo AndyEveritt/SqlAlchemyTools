@@ -33,12 +33,13 @@ u2 = User.create(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
 
 User.bulk_insert([{'name': 'Andy'}, {'name': "Sam"}])
 User(name='Dave', fullname='Dave Owen2', nickname=1).is_valid()
-u1.fullname = 'Dave Owen'
-u1.is_valid()
 
 df = db.get_dataframe(User.query)
 df.pop('id')
 
+
+users = User.query.paginate(page=2, per_page=2)
+print(list(users))
 User.insert_dataframe(df)
 
 User.get(1)

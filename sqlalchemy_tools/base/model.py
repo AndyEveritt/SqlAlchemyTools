@@ -153,15 +153,22 @@ class BaseModel(RepresentableBase):
 
         Not as fast as `insert_dataframe()` but can be faster than converting list to DataFrame then inserting
         """
+        save = cls.db.session.begin_nested()
         try:
             cls.db.session.bulk_insert_mappings(cls, mappings, **kwargs)
-            # cls.db.commit()
+            cls.db.commit()
             return True
         except Exception as e:
-            cls.db.rollback()
+            save.rollback()
             raise e
 
     @classmethod
     def insert_dataframe(cls, df: pd.DataFrame):
         """ Insert a Pandas dataframe into the database (fast) """
-        return df.to_sql(cls.__tablename__, con=cls.db.engine, if_exists='append', index=False)
+        save = cls.db.session.begin_nested()
+        try:
+            df.to_sql(cls.__tablename__, con=cls.db.engine, if_exists='append', index=False)
+            return True
+        except Exception as e:
+            save.rollback()
+            raise e
