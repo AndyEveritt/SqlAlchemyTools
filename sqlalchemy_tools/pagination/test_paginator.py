@@ -1,4 +1,5 @@
-from paginator import Paginator
+from .paginator import Paginator
+
 
 def test_paginator():
 
