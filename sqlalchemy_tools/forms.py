@@ -7,6 +7,6 @@ def create_model_form(db):
     class ModelForm(_BaseModelForm):
         @classmethod
         def get_session(cls):
-            return db.session
+            return db.Session
     
     return ModelForm
