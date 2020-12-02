@@ -8,7 +8,7 @@ from sqlalchemy_tools import Database, ActiveAlchemy
 db = ActiveAlchemy('sqlite://')
 
 
-class User(db.BaseModel):
+class User(db.Model):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -17,7 +17,7 @@ class User(db.BaseModel):
     addresses = relationship('Address', back_populates='user')
 
 
-class Address(db.BaseModel):
+class Address(db.Model):
     __tablename__ = 'addresses'
     id = Column(Integer, primary_key=True)
     email_address = Column(String, nullable=False)
@@ -27,9 +27,10 @@ class Address(db.BaseModel):
 
 db.create_all()    # only required if not using alembic or using a database in memory
 
-u1 = User(name='Dave', fullname='Dave Smith', nickname='Davo')
-u2 = User(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
-db.save([u1, u2])
+u1 = User.create(name='Dave', fullname='Dave Smith', nickname='Davo')
+u2 = User.create(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
+
+User.get(1)
 
 u3 = db.get_or_create(User, {'name': 'Simon'})
 User.query.all()

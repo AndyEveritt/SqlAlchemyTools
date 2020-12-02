@@ -147,7 +147,8 @@ class ActiveAlchemy(object):
                  pool_timeout=None,
                  pool_recycle=None,
                  convert_unicode=True,
-                 query_cls=BaseQuery):
+                 query_cls=BaseQuery,
+                 base_cls=BaseModel):
 
         self.uri = uri
         self.info = make_url(uri)
@@ -163,11 +164,10 @@ class ActiveAlchemy(object):
         self._engine_lock = threading.Lock()
         self.session = _create_scoped_session(self, query_cls=query_cls)
 
-        self.Model = declarative_base(cls=Model, name='Model')
-        self.BaseModel = declarative_base(cls=BaseModel, name='BaseModel')
+        self.Model = declarative_base(cls=base_cls, name='Model')
 
-        self.Model.db, self.BaseModel.db = self, self
-        self.Model._query, self.BaseModel._query = self.session.query, self.session.query
+        self.Model.db = self
+        self.Model.query = self.session.query_property()
 
         if app is not None:
             self.init_app(app)
