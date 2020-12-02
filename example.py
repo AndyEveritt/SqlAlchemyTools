@@ -2,18 +2,18 @@ from enum import unique
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from sqlalchemy_tools import Database, ActiveAlchemy
+from sqlalchemy_tools import Database
 
 
 # db = Database('sqlite:///tmp.db')
-db = ActiveAlchemy('sqlite://')
+db = Database('sqlite://')
 
 
 class User(db.Model):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    fullname = Column(String)
+    fullname = Column(String, unique=True)
     nickname = Column(String)
     addresses = relationship('Address', back_populates='user')
 
@@ -32,7 +32,9 @@ u1 = User.create(name='Dave', fullname='Dave Smith', nickname='Davo')
 u2 = User.create(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
 
 User.bulk_insert([{'name': 'Andy'}, {'name': "Sam"}])
-User(id=1, name='Dave', fullname='Dave Owen', nickname=1).is_valid()
+User(name='Dave', fullname='Dave Owen2', nickname=1).is_valid()
+u1.fullname = 'Dave Owen'
+u1.is_valid()
 
 df = db.get_dataframe(User.query)
 df.pop('id')

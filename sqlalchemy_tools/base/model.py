@@ -122,22 +122,28 @@ class BaseModel(RepresentableBase):
     def is_valid(self, pk: str = 'id') -> bool:
         """ Takes an sqlalchemy orm object and will return True if it is valid """
         if not self._sa_instance_state.transient:
-            return True
+            raise ValueError("Can not validate existing objects")
+
+        # check to see if obj already exists in database as logic is not able to validate existing entries
+        pk = getattr(self, self.__primary_key__)
+        if self.get(pk) is not None:
+            raise ValueError("Can not validate existing objects")
+
+        save = self.db.session.begin_nested()
+        dummy = self.db.session.begin_nested()
         try:
-            self.db.session.add(self)
-            self.db.session.commit()   # will raise IntegrityError if not valid
+            dummy.session.add(self)
+            dummy.commit()   # will raise IntegrityError if not valid
 
             # tidy up database
-            self.db.session.delete(self)
-            self.db.session.commit()
+            save.rollback()
 
             # make obj useable again
-            make_transient(self)
-            setattr(self, pk, None)
+            setattr(self, self.__primary_key__, None)
             return True
         except Exception as e:
             # make db.session useable again
-            self.db.session.rollback()
+            save.rollback()
             return False
 
     @classmethod
@@ -149,6 +155,7 @@ class BaseModel(RepresentableBase):
         """
         try:
             cls.db.session.bulk_insert_mappings(cls, mappings, **kwargs)
+            # cls.db.commit()
             return True
         except Exception as e:
             cls.db.rollback()
