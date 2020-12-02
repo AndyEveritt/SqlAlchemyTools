@@ -8,6 +8,6 @@ def create_model_form(db):
     class ModelForm(_BaseModelForm):
         @classmethod
         def get_session(cls):
-            return db.Session
+            return db.session
 
     return ModelForm
