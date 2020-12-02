@@ -1,3 +1,4 @@
+from enum import unique
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -30,7 +31,16 @@ db.create_all()    # only required if not using alembic or using a database in m
 u1 = User.create(name='Dave', fullname='Dave Smith', nickname='Davo')
 u2 = User.create(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
 
+User.bulk_insert([{'name': 'Andy'}, {'name': "Sam"}])
+User(id=1, name='Dave', fullname='Dave Owen', nickname=1).is_valid()
+
+df = db.get_dataframe(User.query)
+df.pop('id')
+
+User.insert_dataframe(df)
+
 User.get(1)
+q = User.query()
 
 u3 = db.get_or_create(User, {'name': 'Simon'})
 User.query.all()

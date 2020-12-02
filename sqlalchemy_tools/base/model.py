@@ -76,7 +76,7 @@ class BaseModel(RepresentableBase):
         Select entry by its primary key. It must be define as
         __primary_key__ (string)
         """
-        return cls._query(cls).filter(getattr(cls, cls.__primary_key__) == pk).first()
+        return cls.query.filter(getattr(cls, cls.__primary_key__) == pk).first()
 
     @classmethod
     def create(cls, **kwargs):
@@ -96,17 +96,6 @@ class BaseModel(RepresentableBase):
         self.save()
         return self
 
-    @classmethod
-    def query(cls, *args):
-        """
-        :returns query:
-        """
-        if not args:
-            query = cls._query(cls)
-        else:
-            query = cls._query(*args)
-        return query
-
     def save(self):
         """
         Shortcut to add and save + rollback
@@ -119,7 +108,7 @@ class BaseModel(RepresentableBase):
             self.db.rollback()
             raise
 
-    def delete(self, *args, **kwargs):
+    def delete(self):
         """
         Delete a record
         """
@@ -130,64 +119,42 @@ class BaseModel(RepresentableBase):
             self.db.rollback()
             raise
 
+    def is_valid(self, pk: str = 'id') -> bool:
+        """ Takes an sqlalchemy orm object and will return True if it is valid """
+        if not self._sa_instance_state.transient:
+            return True
+        try:
+            self.db.session.add(self)
+            self.db.session.commit()   # will raise IntegrityError if not valid
 
-class Model(BaseModel):
-    """
-    Model create
-    """
-    id = Column(Integer, primary_key=True)
-    created_at = Column(sa_utils.ArrowType, default=utcnow)
-    updated_at = Column(sa_utils.ArrowType, default=utcnow, onupdate=utcnow)
-    is_deleted = Column(Boolean, default=False, index=True)
-    deleted_at = Column(sa_utils.ArrowType, default=None)
+            # tidy up database
+            self.db.session.delete(self)
+            self.db.session.commit()
 
-    @classmethod
-    def query(cls, *args, **kwargs):
-        """
-        :returns query:
-        :**kwargs:
-            - include_deleted bool: True To filter in deleted records.
-                                    By default it is set to False
-        """
-        if not args:
-            query = cls._query(cls)
-        else:
-            query = cls._query(*args)
-
-        if "include_deleted" not in kwargs or kwargs["include_deleted"] is False:
-            query = query.filter(cls.is_deleted is not True)
-
-        return query
+            # make obj useable again
+            make_transient(self)
+            setattr(self, pk, None)
+            return True
+        except Exception as e:
+            # make db.session useable again
+            self.db.session.rollback()
+            return False
 
     @classmethod
-    def get(cls, id, include_deleted=False):
+    def bulk_insert(cls, mappings: List[Dict], **kwargs):
         """
-        Select entry by id
-        :param id: The id of the entry
-        :param include_deleted: It should not query deleted record. Set to True to get all
-        """
-        return cls.query(include_deleted=include_deleted)\
-                  .filter(cls.id == id)\
-                  .first()
+        Insert a list of dicts to the database.
 
-    def delete(self, delete=True, hard_delete=False):
+        Not as fast as `insert_dataframe()` but can be faster than converting list to DataFrame then inserting
         """
-        Soft delete a record
-        :param delete: Bool - To soft-delete/soft-undelete a record
-        :param hard_delete: Bool - If true it will completely delete the record
-        """
-        # Hard delete
-        if hard_delete:
-            try:
-                self.db.session.delete(self)
-                return self.db.commit()
-            except:
-                self.db.rollback()
-                raise
-        else:
-            data = {
-                "is_deleted": delete,
-                "deleted_at": utcnow() if delete else None
-            }
-            self.update(**data)
-        return self
+        try:
+            cls.db.session.bulk_insert_mappings(cls, mappings, **kwargs)
+            return True
+        except Exception as e:
+            cls.db.rollback()
+            raise e
+
+    @classmethod
+    def insert_dataframe(cls, df: pd.DataFrame):
+        """ Insert a Pandas dataframe into the database (fast) """
+        return df.to_sql(cls.__tablename__, con=cls.db.engine, if_exists='append', index=False)
