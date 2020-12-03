@@ -39,14 +39,14 @@ class BaseModel(RepresentableBase):
             if not k.startswith('_'):
                 yield (k, getattr(self, k))
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         """
         Return an entity as dict
         :returns dict:
         """
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-    def to_json(self):
+    def to_json(self) -> str:
         """
         Convert the entity to JSON
         :returns str:

@@ -71,6 +71,8 @@ pip install sqlalchemy-tools
       - [update(\*\*kwargs)](#updatekwargs)
       - [delete()](#delete)
       - [save()](#save)
+      - [to_dict()](#to_dict)
+      - [to_json()](#to_json)
       - [is_valid()](#is_valid)
       - [bulk_insert(mapping: List[Dict], \*\*kwargs)](#bulk_insertmapping-listdict-kwargs)
       - [insert_dataframe(df: pd.DataFrame)](#insert_dataframedf-pddataframe)
@@ -483,6 +485,24 @@ A shortcut to `session.add` + `session.commit()`
 record = User.get(124)
 record.login = "Another one"
 record.save()
+```
+
+#### to_dict()
+
+Returns the model instance as a dictionary
+
+```python
+record = User.get(1234)
+record_dict = record.to_dict()
+```
+
+#### to_json()
+
+Returns the model instance as a JSON formatted string
+
+```python
+record = User.get(1234)
+record_json = record.to_json()
 ```
 
 #### is_valid()
