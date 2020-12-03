@@ -33,6 +33,51 @@ pip install sqlalchemy-tools
   - Quickly add all the fields of a model to a WTF form
   - Supports `include`, `exclude`, `only`
 
+# Contents
+- [SqlAlchemyTools](#sqlalchemytools)
+- [Installation](#installation)
+- [Features](#features)
+- [Contents](#contents)
+- [Quick Overview:](#quick-overview)
+  - [Database](#database)
+    - [Create the model](#create-the-model)
+    - [Retrieve all records](#retrieve-all-records)
+    - [Create new record](#create-new-record)
+    - [Get a record by primary key (id)](#get-a-record-by-primary-key-id)
+    - [Update record from primary key](#update-record-from-primary-key)
+    - [Update record from query iteration](#update-record-from-query-iteration)
+    - [Delete a record](#delete-a-record)
+    - [Query with filter](#query-with-filter)
+  - [Migration](#migration)
+    - [Why use SqlAlchemyTools migration vs. Alembic directly](#why-use-sqlalchemytools-migration-vs-alembic-directly)
+    - [Create `manage.py`](#create-managepy)
+    - [Initialise migrations folder](#initialise-migrations-folder)
+    - [Create a new migration](#create-a-new-migration)
+    - [Upgrade database](#upgrade-database)
+    - [Downgrade database](#downgrade-database)
+    - [Help](#help)
+  - [ModelForm](#modelform)
+- [How to use](#how-to-use)
+  - [Database](#database-1)
+    - [Create a connection](#create-a-connection)
+      - [Databases Drivers & DB Connection examples](#databases-drivers--db-connection-examples)
+    - [Create a Model](#create-a-model)
+  - [Models: _db.Model_](#models-dbmodel)
+    - [db.Model Methods Description](#dbmodel-methods-description)
+      - [query](#query)
+      - [get(id)](#getid)
+      - [create(\*\*kwargs)](#createkwargs)
+      - [update(\*\*kwargs)](#updatekwargs)
+      - [delete()](#delete)
+      - [save()](#save)
+      - [Method Chaining](#method-chaining)
+      - [Aggegated selects](#aggegated-selects)
+  - [With Web Application](#with-web-application)
+    - [More examples](#more-examples)
+      - [Many databases, one web app](#many-databases-one-web-app)
+      - [Many web apps, one database](#many-web-apps-one-database)
+  - [Pagination](#pagination)
+
 # Quick Overview:
 
 ## Database
@@ -318,7 +363,7 @@ db = Database('sqlite://', query_cls=MyBaseQuery)
 
 ### db.Model Methods Description
 
-#### query(\*args, \*\*kwargs)
+#### query
 
 To start querying the DB and returns a `db.session.query` object to filter or apply more conditions.
 
@@ -542,3 +587,117 @@ This is one way how you could render such a pagination in your templates:
         </nav>
     {% endmacro %}
 ```
+
+## Migration
+
+### Setup
+
+SqlAlchemyTools exposes `Migrate` and `migrate_manager`
+
+The `Migrate` class links the database and other configuration. The `migrate_manager` object contains all the cli functions
+
+```python
+from sqlalchemy_tools.migration import Migrate, migrate_manager
+from sqlalchemy_tools import Database
+
+
+# create/import your database
+db = Database('sqlite:///tmp.db')
+
+# create a `migrate` object that is linked to your database
+migrate = Migrate(db)
+migrate_manager.set_migrate(migrate)
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128))
+    surname = db.Column(db.String(128))
+
+
+if __name__ == '__main__':
+    migrate_manager.main()
+```
+
+### Usage
+
+After the extension is initialized, the command-line options will be available with several sub-commands through the `manage.py` type script created. Below is a list of the available sub-commands:
+
+```
+    python manage.py --help
+        Shows a list of available commands.
+```
+```
+    python manage.py init [--multidb]
+        Initializes migration support for the application. The optional --multidb enables migrations for multiple databases configured as Flask-SQLAlchemy binds.
+```
+```
+    python manage.py revision [--message MESSAGE] [--autogenerate] [--sql] [--head HEAD] [--splice] [--branch-label BRANCH_LABEL] [--version-path VERSION_PATH] [--rev-id REV_ID]
+        Creates an empty revision script. The script needs to be edited manually with the upgrade and downgrade changes. See Alembic’s documentation for instructions on how to write migration scripts. An optional migration message can be included.
+```
+```
+    python manage.py migrate [--message MESSAGE] [--sql] [--head HEAD] [--splice] [--branch-label BRANCH_LABEL] [--version-path VERSION_PATH] [--rev-id REV_ID]
+        Equivalent to revision --autogenerate. The migration script is populated with changes detected automatically. The generated script should to be reviewed and edited as not all types of changes can be detected automatically. This command does not make any changes to the database, just creates the revision script.
+```
+```
+    python manage.py edit <revision>
+        Edit a revision script using $EDITOR.
+```
+```
+    python manage.py upgrade [--sql] [--tag TAG] [--x-arg ARG] <revision>
+        Upgrades the database. If revision isn’t given then "head" is assumed.
+```
+```
+    python manage.py downgrade [--sql] [--tag TAG] [--x-arg ARG] <revision>
+        Downgrades the database. If revision isn’t given then -1 is assumed.
+```
+```
+    python manage.py stamp [--sql] [--tag TAG] <revision>
+        Sets the revision in the database to the one given as an argument, without performing any migrations.
+```
+```
+    python manage.py current [--verbose]
+        Shows the current revision of the database.
+```
+```
+    python manage.py history [--rev-range REV_RANGE] [--verbose]
+        Shows the list of migrations. If a range isn’t given then the entire history is shown.
+```
+```
+    python manage.py show <revision>
+        Show the revision denoted by the given symbol.
+```
+```
+    python manage.py merge [--message MESSAGE] [--branch-label BRANCH_LABEL] [--rev-id REV_ID] <revisions>
+        Merge two revisions together. Creates a new revision file.
+```
+```
+    python manage.py heads [--verbose] [--resolve-dependencies]
+        Show current available heads in the revision script directory.
+```
+```
+    python manage.py branches [--verbose]
+        Show current branch points.
+```
+
+Notes:
+
+* All commands also take a --directory DIRECTORY option that points to the directory containing the migration scripts. If this argument is omitted the directory used is migrations.
+* The default directory can also be specified as a directory argument to the Migrate constructor.
+* The --sql option present in several commands performs an ‘offline’ mode migration. Instead of executing the database commands the SQL statements that need to be executed are printed to the console.
+* Detailed documentation on these commands can be found in the Alembic’s command reference page.
+
+
+### Configuration Callbacks
+
+Sometimes applications need to dynamically insert their own settings into the Alembic configuration. A function decorated with the configure callback will be invoked after the configuration is read, and before it is used. The function can modify the configuration object, or replace it with a different one.
+
+```python
+@migrate.configure
+def configure_alembic(config):
+    # modify config object
+    return config
+```
+
+Multiple configuration callbacks can be defined simply by decorating multiple functions. The order in which multiple callbacks are invoked is undetermined.
+
