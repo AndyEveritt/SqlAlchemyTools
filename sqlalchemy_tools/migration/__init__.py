@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 class _MigrateConfig(object):
     def __init__(self, migrate, db, **kwargs):
-        self.migrate = migrate
+        self.migrate: Migrate = migrate
         self.db = db
         self.directory = migrate.directory
         self.configure_args = kwargs
@@ -37,7 +37,7 @@ class Config(AlembicConfig):
 
 
 class Migrate(object):
-    def __init__(self, db=None, app=None, directory='migrations', **kwargs):
+    def __init__(self, db, app=None, directory='migrations', **kwargs):
         self.configure_callbacks = []
         self.db = db
         self.directory = str(directory)
@@ -53,8 +53,7 @@ class Migrate(object):
         self.alembic_ctx_kwargs.update(kwargs)
         if not hasattr(app, 'extensions'):
             app.extensions = {}
-        app.extensions['migrate'] = _MigrateConfig(
-            self, self.db, **self.alembic_ctx_kwargs)
+        app.extensions['migrate'] = self.config
 
     def configure(self, f):
         self.configure_callbacks.append(f)
@@ -99,6 +98,15 @@ def catch_errors(f):
     return wrapped
 
 
+def get_next_rev_id(directory):
+    count = 0
+    for filename in os.listdir(directory):
+        if not filename.endswith('.py'):
+            continue
+        count += 1
+    return str(count + 1).zfill(4)
+
+
 class MigrateManager(Manager):
     @property
     def migrate_config(self):
@@ -140,7 +148,7 @@ def init(directory=None, template=None):
 
 
 @migrate_manager.arg('rev_id', flag='rev-id', default=None,
-                     help=('Specify a hardcoded revision id instead of generating one'))
+                     help=('Specify a hardcoded revision id instead of generating the next one in sequence'))
 @migrate_manager.arg('version_path', flag='version-path', default=None,
                      help=('Specify specific path from config for version file'))
 @migrate_manager.arg('branch_label', flag='branch-label', default=None,
@@ -168,13 +176,17 @@ def revision(directory=None, message=None, autogenerate=False, sql=False,
              rev_id=None):
     """Create a new revision file."""
     config = migrate_manager.migrate_config.migrate.get_config(directory)
+    if directory is None:
+        directory = migrate_manager.migrate_config.directory
+    if rev_id is None:
+        rev_id = get_next_rev_id(os.path.join(directory, 'versions'))
     command.revision(config, message, autogenerate=autogenerate, sql=sql,
                      head=head, splice=splice, branch_label=branch_label,
                      version_path=version_path, rev_id=rev_id)
 
 
 @migrate_manager.arg('rev_id', flag='rev-id', default=None,
-                     help=('Specify a hardcoded revision id instead of generating one'))
+                     help=('Specify a hardcoded revision id instead of generating the next one in sequence'))
 @migrate_manager.arg('version_path', flag='version-path', default=None,
                      help=('Specify specific path from config for version file'))
 @migrate_manager.arg('branch_label', flag='branch-label', default=None,
@@ -200,6 +212,10 @@ def migrate(directory=None, message=None, sql=False, head='head', splice=False,
     """Alias for 'revision --autogenerate'"""
     config = migrate_manager.migrate_config.migrate.get_config(
         directory, opts=['autogenerate'], x_arg=x_arg)
+    if directory is None:
+        directory = migrate_manager.migrate_config.directory
+    if rev_id is None:
+        rev_id = get_next_rev_id(os.path.join(directory, 'versions'))
     command.revision(config, message, autogenerate=True, sql=sql,
                      head=head, splice=splice, branch_label=branch_label,
                      version_path=version_path, rev_id=rev_id)
@@ -257,7 +273,7 @@ def merge(directory=None, revisions='', message=None, branch_label=None,
 def upgrade(directory=None, revision='head', sql=False, tag=None, x_arg=None):
     """Upgrade to a later version"""
     config = migrate_manager.migrate_config.migrate.get_config(directory,
-                                                    x_arg=x_arg)
+                                                               x_arg=x_arg)
     command.upgrade(config, revision, sql=sql, tag=tag)
 
 
@@ -277,7 +293,7 @@ def upgrade(directory=None, revision='head', sql=False, tag=None, x_arg=None):
 def downgrade(directory=None, revision='-1', sql=False, tag=None, x_arg=None):
     """Revert to a previous version"""
     config = migrate_manager.migrate_config.migrate.get_config(directory,
-                                                    x_arg=x_arg)
+                                                               x_arg=x_arg)
     if sql and revision == '-1':
         revision = 'head:-1'
     command.downgrade(config, revision, sql=sql, tag=tag)
