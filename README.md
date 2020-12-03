@@ -70,6 +70,22 @@ pip install sqlalchemy-tools
       - [update(\*\*kwargs)](#updatekwargs)
       - [delete()](#delete)
       - [save()](#save)
+      - [is_valid()](#is_valid)
+      - [bulk_insert(mapping: List[Dict], \*\*kwargs)](#bulk_insertmapping-listdict-kwargs)
+      - [insert_dataframe(df: pd.DataFrame)](#insert_dataframedf-pddataframe)
+    - [db Methods Description](#db-methods-description)
+      - [init_app(app)](#init_appapp)
+      - [engine](#engine)
+      - [metadata](#metadata)
+      - [query](#query-1)
+      - [add(\*args, \*\*kwargs)](#addargs-kwargs)
+      - [flush(\*args, \*\*kwargs)](#flushargs-kwargs)
+      - [commit()](#commit)
+      - [rollback()](#rollback)
+      - [create_all()](#create_all)
+      - [drop_all()](#drop_all)
+      - [reflect(meta)](#reflectmeta)
+      - [get_dataframe(query)](#get_dataframequery)
       - [Method Chaining](#method-chaining)
       - [Aggegated selects](#aggegated-selects)
   - [With Web Application](#with-web-application)
@@ -353,6 +369,8 @@ The default `db.Model` uses `from sqlalchemy_tools import BaseModel`. It can be 
 db = Database('sqlite://', base_cls=MyBaseModel)
 ```
 
+The BaseModel `__repr__` is formatted as:
+`ClassName(attr_name=attr_value, ...)`
 
 
 **BaseQuery**
@@ -448,6 +466,88 @@ A shortcut to `session.add` + `session.commit()`
 record = User.get(124)
 record.login = "Another one"
 record.save()
+```
+
+#### is_valid()
+
+Check whether the model instance will pass the database validation.
+
+A nested session is created and the object is committed, if the commit is successful then the session is rolledback and the method returns True, else the session is rollback and the method returns False
+
+```python
+user = User(login='abc', passw_hash='hash', profile_id=123)
+user.is_valid()
+```
+
+#### bulk_insert(mapping: List[Dict], \*\*kwargs)
+
+Insert a list of dictionarys to the database
+
+```python
+User.bulk_insert([{'name': 'Andy'},
+                  {'name': "Sam"}])
+```
+
+#### insert_dataframe(df: pd.DataFrame)
+
+Insert a Pandas dataframe into the database. Faster than `bulk_insert` if you already have you data in DataFrame format
+
+```python
+df = pd.DataFrame()
+... # fill df with data. Set ForeignKeys as the appropriate id, ignore relationship fields
+User.insert_dataframe(df)
+```
+
+---
+
+### db Methods Description
+
+#### init_app(app)
+This callback can be used to initialize an application for the
+use with this database setup. In a web application or a multithreaded
+environment, never use a database without initialize it first,
+or connections will leak.
+
+#### engine
+Gives access to the engine
+
+#### metadata
+Proxy for `db.Model.metadata`
+
+#### query
+Proxy for `db.session.query`
+
+#### add(\*args, \*\*kwargs)
+Proxy for `db.session.add`
+
+#### flush(\*args, \*\*kwargs)
+Proxy for `db.session.flush`
+
+#### commit()
+Proxy for `db.session.commit`
+
+#### rollback()
+Proxy for `db.session.rollback`
+
+#### create_all()
+Creates all tables
+
+#### drop_all()
+Drops all tables
+
+#### reflect(meta)
+Reflects tables from the database
+
+#### get_dataframe(query)
+Converts a query into a Pandas DataFrame
+
+```python
+query = User.query
+df = db.get_dataframe(query)
+
+# or
+
+df = db.get_dataframe(User.query.filter(User.name=='Dave'))
 ```
 
 ---

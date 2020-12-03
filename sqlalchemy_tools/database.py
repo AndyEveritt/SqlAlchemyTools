@@ -239,6 +239,7 @@ class Database(object):
 
     @staticmethod
     def get_dataframe(query):
+        """ Converts a query into a Pandas DataFrame """
         return pd.read_sql(query.statement, query.session.bind)
 
     def __repr__(self):

@@ -107,7 +107,7 @@ class BaseModel(RepresentableBase):
             self.db.rollback()
             raise
 
-    def is_valid(self, pk: str = 'id') -> bool:
+    def is_valid(self) -> bool:
         """ Takes an sqlalchemy orm object and will return True if it is valid """
         if not self._sa_instance_state.transient:
             raise ValueError("Can not validate existing objects")
