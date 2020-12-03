@@ -77,6 +77,10 @@ pip install sqlalchemy-tools
       - [Many databases, one web app](#many-databases-one-web-app)
       - [Many web apps, one database](#many-web-apps-one-database)
   - [Pagination](#pagination)
+  - [Migration](#migration-1)
+    - [Setup](#setup)
+    - [Usage](#usage)
+    - [Configuration Callbacks](#configuration-callbacks)
 
 # Quick Overview:
 
