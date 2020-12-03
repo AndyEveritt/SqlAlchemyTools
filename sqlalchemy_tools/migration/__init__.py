@@ -37,7 +37,7 @@ class Config(AlembicConfig):
 
 
 class Migrate(object):
-    def __init__(self, app=None, db=None, directory='migrations', **kwargs):
+    def __init__(self, db=None, app=None, directory='migrations', **kwargs):
         self.configure_callbacks = []
         self.db = db
         self.directory = str(directory)
@@ -108,10 +108,13 @@ class MigrateManager(Manager):
         return self._migrate_config
 
     @migrate_config.setter
-    def migrate_config(self, migrate: Migrate):
-        if isinstance(migrate, Migrate):
-            self._migrate_config = migrate.config
+    def migrate_config(self, value: _MigrateConfig):
+        if isinstance(value, _MigrateConfig):
+            self._migrate_config = value
             return self.migrate_config
+
+    def set_migrate(self, migrate: Migrate):
+        self.migrate_config = migrate.config
 
 
 migrate_manager = MigrateManager()
@@ -119,11 +122,11 @@ migrate_manager = MigrateManager()
 
 @migrate_manager.arg('directory', flag='directory', shortcut='d', default=None,
                      help=("Migration script directory (default is 'migrations')"))
-@migrate_manager.arg('multidb', flag='multidb', type=bool, default=False,
+@migrate_manager.arg('template', flag='template', default='default',
                      help=("Multiple databases migraton (default is False)"))
 @migrate_manager.command
 @catch_errors
-def init(directory=None, multidb=False):
+def init(directory=None, template=None):
     """Creates a new migration repository"""
     if directory is None:
         directory = migrate_manager.migrate_config.directory
@@ -131,10 +134,9 @@ def init(directory=None, multidb=False):
     config.set_main_option('script_location', directory)
     config.config_file_name = os.path.join(directory, 'alembic.ini')
     config = migrate_manager.migrate_config.migrate.call_configure_callbacks(config)
-    if multidb:
-        command.init(config, directory, 'flask-multidb')
-    else:
-        command.init(config, directory, 'flask')
+    if not os.path.exists(os.path.join(config.get_template_directory(), template)):
+        raise ValueError("Template does not exist")
+    command.init(config, directory, template)
 
 
 @migrate_manager.arg('rev_id', flag='rev-id', default=None,

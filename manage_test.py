@@ -5,7 +5,7 @@ from sqlalchemy_tools import Database
 db = Database('sqlite:///tmp.db')
 migrate = Migrate(db)
 
-migrate_manager.migrate_config = migrate
+migrate_manager.set_migrate(migrate)
 
 
 class User(db.Model):
