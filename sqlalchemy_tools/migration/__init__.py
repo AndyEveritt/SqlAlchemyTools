@@ -109,7 +109,7 @@ class MigrateCommands:
 
     @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
                         help=("Migration script directory (default is 'migrations')"))
-    @MigrateManager.arg('multidb', flag='multidb', action='store_true', default=False,
+    @MigrateManager.arg('multidb', flag='multidb', type=bool, default=False,
                         help=("Multiple databases migraton (default is False)"))
     @MigrateManager.command
     @catch_errors
@@ -132,15 +132,15 @@ class MigrateCommands:
                         help=('Specify specific path from config for version file'))
     @MigrateManager.arg('branch_label', flag='branch-label', default=None,
                         help=('Specify a branch label to apply to the new revision'))
-    @MigrateManager.arg('splice', flag='splice', action='store_true',
+    @MigrateManager.arg('splice', flag='splice', type=bool,
                         default=False,
                         help=('Allow a non-head revision as the "head" to splice onto'))
     @MigrateManager.arg('head', flag='head', default='head',
                         help=('Specify head revision or <branchname>@head to base new revision on'))
-    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+    @MigrateManager.arg('sql', flag='sql', type=bool, default=False,
                         help=("Don't emit SQL to database - dump to standard output instead"))
     @MigrateManager.arg('autogenerate', flag='autogenerate',
-                        action='store_true', default=False,
+                        type=bool, default=False,
                         help=('Populate revision script with candidate '
                               'migration operations, based on comparison of '
                               'database to model'))
@@ -165,12 +165,12 @@ class MigrateCommands:
                         help=('Specify specific path from config for version file'))
     @MigrateManager.arg('branch_label', flag='branch-label', default=None,
                         help=('Specify a branch label to apply to the new revision'))
-    @MigrateManager.arg('splice', flag='splice', action='store_true',
+    @MigrateManager.arg('splice', flag='splice', type=bool,
                         default=False,
                         help=('Allow a non-head revision as the "head" to splice onto'))
     @MigrateManager.arg('head', flag='head', default='head',
                         help=('Specify head revision or <branchname>@head to base new revision on'))
-    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+    @MigrateManager.arg('sql', flag='sql', type=bool, default=False,
                         help=("Don't emit SQL to database - dump to standard output instead"))
     @MigrateManager.arg('message', flag='message', shortcut='m', default=None,
                         help='Revision message')
@@ -226,7 +226,7 @@ class MigrateCommands:
 
     @MigrateManager.arg('tag', flag='tag', default=None,
                         help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
-    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+    @MigrateManager.arg('sql', flag='sql', type=bool, default=False,
                         help=("Don't emit SQL to database - dump to standard output instead"))
     @MigrateManager.arg('revision', nargs='?', default='head',
                         help="revision identifier")
@@ -245,7 +245,7 @@ class MigrateCommands:
 
     @MigrateManager.arg('tag', flag='tag', default=None,
                         help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
-    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+    @MigrateManager.arg('sql', flag='sql', type=bool, default=False,
                         help=("Don't emit SQL to database - dump to standard output instead"))
     @MigrateManager.arg('revision', nargs='?', default="-1",
                         help="revision identifier")
@@ -276,9 +276,9 @@ class MigrateCommands:
         command.show(config, revision)
 
     @MigrateManager.arg('indicate_current', flag='indicate-current', shortcut='i',
-                        action='store_true', default=False,
+                        type=bool, default=False,
                         help=('Indicate current version (Alembic 0.9.9 or greater is required)'))
-    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', type=bool,
                         default=False, help='Use more verbose output')
     @MigrateManager.arg('rev_range', flag='rev-range', shortcut='r', default=None,
                         help=('Specify a revision range; format is [start]:[end]'))
@@ -296,9 +296,9 @@ class MigrateCommands:
         else:
             command.history(config, rev_range, verbose=verbose)
 
-    @MigrateManager.arg('resolve_dependencies', flag='resolve-dependencies', action='store_true',
+    @MigrateManager.arg('resolve_dependencies', flag='resolve-dependencies', type=bool,
                         default=False, help='Treat dependency versions as down revisions')
-    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', type=bool,
                         default=False, help='Use more verbose output')
     @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
                         help=("Migration script directory (default is 'migrations')"))
@@ -310,7 +310,7 @@ class MigrateCommands:
         command.heads(config, verbose=verbose,
                       resolve_dependencies=resolve_dependencies)
 
-    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', type=bool,
                         default=False, help='Use more verbose output')
     @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
                         help=("Migration script directory (default is 'migrations')"))
@@ -321,10 +321,10 @@ class MigrateCommands:
         config = self.migrate_config.migrate.get_config(directory)
         command.branches(config, verbose=verbose)
 
-    @MigrateManager.arg('head_only', flag='head-only', action='store_true',
+    @MigrateManager.arg('head_only', flag='head-only', type=bool,
                         default=False,
                         help='Deprecated. Use --verbose for additional output')
-    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', type=bool,
                         default=False, help='Use more verbose output')
     @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
                         help=("Migration script directory (default is 'migrations')"))
@@ -337,7 +337,7 @@ class MigrateCommands:
 
     @MigrateManager.arg('tag', flag='tag', default=None,
                         help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
-    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+    @MigrateManager.arg('sql', flag='sql', type=bool, default=False,
                         help=("Don't emit SQL to database - dump to standard output instead"))
     @MigrateManager.arg('revision', default=None, help="revision identifier")
     @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
