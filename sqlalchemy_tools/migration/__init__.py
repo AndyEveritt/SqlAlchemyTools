@@ -99,248 +99,253 @@ def catch_errors(f):
     return wrapped
 
 
-MigrateCommand = Manager()
+MigrateManager = Manager()
 
 
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@MigrateCommand.arg('multidb', flag='multidb', action='store_true', default=False,
-                    help=("Multiple databases migraton (default is False)"))
-@catch_errors
-def init(directory=None, multidb=False):
-    """Creates a new migration repository"""
-    if directory is None:
-        directory = current_app.extensions['migrate'].directory
-    config = Config()
-    config.set_main_option('script_location', directory)
-    config.config_file_name = os.path.join(directory, 'alembic.ini')
-    config = current_app.extensions['migrate'].\
-        migrate.call_configure_callbacks(config)
-    if multidb:
-        command.init(config, directory, 'flask-multidb')
-    else:
-        command.init(config, directory, 'flask')
+class MigrateCommands:
+    def __init__(self, migrate: Migrate) -> None:
+        self.migrate_config = migrate.config
 
 
-@MigrateCommand.arg('rev_id', flag='rev-id', default=None,
-                    help=('Specify a hardcoded revision id instead of generating one'))
-@MigrateCommand.arg('version_path', flag='version-path', default=None,
-                    help=('Specify specific path from config for version file'))
-@MigrateCommand.arg('branch_label', flag='branch-label', default=None,
-                    help=('Specify a branch label to apply to the new revision'))
-@MigrateCommand.arg('splice', flag='splice', action='store_true',
-                    default=False,
-                    help=('Allow a non-head revision as the "head" to splice onto'))
-@MigrateCommand.arg('head', flag='head', default='head',
-                    help=('Specify head revision or <branchname>@head to base new revision on'))
-@MigrateCommand.arg('sql', flag='sql', action='store_true', default=False,
-                    help=("Don't emit SQL to database - dump to standard output instead"))
-@MigrateCommand.arg('autogenerate', flag='autogenerate',
-                    action='store_true', default=False,
-                    help=('Populate revision script with candidate '
-                          'migration operations, based on comparison of '
-                          'database to model'))
-@MigrateCommand.arg('message', flag='message', shortcut='m', default=None,
-                    help='Revision message')
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def revision(directory=None, message=None, autogenerate=False, sql=False,
-             head='head', splice=False, branch_label=None, version_path=None,
-             rev_id=None):
-    """Create a new revision file."""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    command.revision(config, message, autogenerate=autogenerate, sql=sql,
-                     head=head, splice=splice, branch_label=branch_label,
-                     version_path=version_path, rev_id=rev_id)
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.arg('multidb', flag='multidb', action='store_true', default=False,
+                        help=("Multiple databases migraton (default is False)"))
+    @MigrateManager.command
+    @catch_errors
+    def init(self, directory=None, multidb=False):
+        """Creates a new migration repository"""
+        if directory is None:
+            directory = self.migrate_config.directory
+        config = Config()
+        config.set_main_option('script_location', directory)
+        config.config_file_name = os.path.join(directory, 'alembic.ini')
+        config = self.migrate_config.migrate.call_configure_callbacks(config)
+        if multidb:
+            command.init(config, directory, 'flask-multidb')
+        else:
+            command.init(config, directory, 'flask')
 
+    @MigrateManager.arg('rev_id', flag='rev-id', default=None,
+                        help=('Specify a hardcoded revision id instead of generating one'))
+    @MigrateManager.arg('version_path', flag='version-path', default=None,
+                        help=('Specify specific path from config for version file'))
+    @MigrateManager.arg('branch_label', flag='branch-label', default=None,
+                        help=('Specify a branch label to apply to the new revision'))
+    @MigrateManager.arg('splice', flag='splice', action='store_true',
+                        default=False,
+                        help=('Allow a non-head revision as the "head" to splice onto'))
+    @MigrateManager.arg('head', flag='head', default='head',
+                        help=('Specify head revision or <branchname>@head to base new revision on'))
+    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+                        help=("Don't emit SQL to database - dump to standard output instead"))
+    @MigrateManager.arg('autogenerate', flag='autogenerate',
+                        action='store_true', default=False,
+                        help=('Populate revision script with candidate '
+                              'migration operations, based on comparison of '
+                              'database to model'))
+    @MigrateManager.arg('message', flag='message', shortcut='m', default=None,
+                        help='Revision message')
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def revision(self, directory=None, message=None, autogenerate=False, sql=False,
+                 head='head', splice=False, branch_label=None, version_path=None,
+                 rev_id=None):
+        """Create a new revision file."""
+        config = self.migrate_config.migrate.get_config(directory)
+        command.revision(config, message, autogenerate=autogenerate, sql=sql,
+                         head=head, splice=splice, branch_label=branch_label,
+                         version_path=version_path, rev_id=rev_id)
 
-@MigrateCommand.arg('rev_id', flag='rev-id', default=None,
-                    help=('Specify a hardcoded revision id instead of generating one'))
-@MigrateCommand.arg('version_path', flag='version-path', default=None,
-                    help=('Specify specific path from config for version file'))
-@MigrateCommand.arg('branch_label', flag='branch-label', default=None,
-                    help=('Specify a branch label to apply to the new revision'))
-@MigrateCommand.arg('splice', flag='splice', action='store_true',
-                    default=False,
-                    help=('Allow a non-head revision as the "head" to splice onto'))
-@MigrateCommand.arg('head', flag='head', default='head',
-                    help=('Specify head revision or <branchname>@head to base new revision on'))
-@MigrateCommand.arg('sql', flag='sql', action='store_true', default=False,
-                    help=("Don't emit SQL to database - dump to standard output instead"))
-@MigrateCommand.arg('message', flag='message', shortcut='m', default=None,
-                    help='Revision message')
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@MigrateCommand.arg('x_arg', flag='x-arg', shortcut='x', default=None,
-                    action='append', help=("Additional arguments consumed "
-                                           "by custom env.py scripts"))
-@catch_errors
-def migrate(directory=None, message=None, sql=False, head='head', splice=False,
-            branch_label=None, version_path=None, rev_id=None, x_arg=None):
-    """Alias for 'revision --autogenerate'"""
-    config = current_app.extensions['migrate'].migrate.get_config(
-        directory, opts=['autogenerate'], x_arg=x_arg)
-    command.revision(config, message, autogenerate=True, sql=sql,
-                     head=head, splice=splice, branch_label=branch_label,
-                     version_path=version_path, rev_id=rev_id)
+    @MigrateManager.arg('rev_id', flag='rev-id', default=None,
+                        help=('Specify a hardcoded revision id instead of generating one'))
+    @MigrateManager.arg('version_path', flag='version-path', default=None,
+                        help=('Specify specific path from config for version file'))
+    @MigrateManager.arg('branch_label', flag='branch-label', default=None,
+                        help=('Specify a branch label to apply to the new revision'))
+    @MigrateManager.arg('splice', flag='splice', action='store_true',
+                        default=False,
+                        help=('Allow a non-head revision as the "head" to splice onto'))
+    @MigrateManager.arg('head', flag='head', default='head',
+                        help=('Specify head revision or <branchname>@head to base new revision on'))
+    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+                        help=("Don't emit SQL to database - dump to standard output instead"))
+    @MigrateManager.arg('message', flag='message', shortcut='m', default=None,
+                        help='Revision message')
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.arg('x_arg', flag='x-arg', shortcut='x', default=None,
+                        action='append', help=("Additional arguments consumed "
+                                               "by custom env.py scripts"))
+    @MigrateManager.command
+    @catch_errors
+    def migrate(self, directory=None, message=None, sql=False, head='head', splice=False,
+                branch_label=None, version_path=None, rev_id=None, x_arg=None):
+        """Alias for 'revision --autogenerate'"""
+        config = self.migrate_config.migrate.get_config(
+            directory, opts=['autogenerate'], x_arg=x_arg)
+        command.revision(config, message, autogenerate=True, sql=sql,
+                         head=head, splice=splice, branch_label=branch_label,
+                         version_path=version_path, rev_id=rev_id)
 
+    @MigrateManager.arg('revision', nargs='?', default='head',
+                        help="revision identifier")
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def edit(self, directory=None, revision='current'):
+        """Edit current revision."""
+        if alembic_version >= (0, 8, 0):
+            config = self.migrate_config.migrate.get_config(
+                directory)
+            command.edit(config, revision)
+        else:
+            raise RuntimeError('Alembic 0.8.0 or greater is required')
 
-@MigrateCommand.arg('revision', nargs='?', default='head',
-                    help="revision identifier")
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def edit(directory=None, revision='current'):
-    """Edit current revision."""
-    if alembic_version >= (0, 8, 0):
-        config = current_app.extensions['migrate'].migrate.get_config(
-            directory)
-        command.edit(config, revision)
-    else:
-        raise RuntimeError('Alembic 0.8.0 or greater is required')
+    @MigrateManager.arg('rev_id', flag='rev-id', default=None,
+                        help=('Specify a hardcoded revision id instead of generating one'))
+    @MigrateManager.arg('branch_label', flag='branch-label', default=None,
+                        help=('Specify a branch label to apply to the new revision'))
+    @MigrateManager.arg('message', flag='message', shortcut='m', default=None,
+                        help='Revision message')
+    @MigrateManager.arg('revisions', nargs='+',
+                        help='one or more revisions, or "heads" for all heads')
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def merge(self, directory=None, revisions='', message=None, branch_label=None,
+              rev_id=None):
+        """Merge two revisions together.  Creates a new migration file"""
+        config = self.migrate_config.migrate.get_config(directory)
+        command.merge(config, revisions, message=message,
+                      branch_label=branch_label, rev_id=rev_id)
 
+    @MigrateManager.arg('tag', flag='tag', default=None,
+                        help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
+    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+                        help=("Don't emit SQL to database - dump to standard output instead"))
+    @MigrateManager.arg('revision', nargs='?', default='head',
+                        help="revision identifier")
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.arg('x_arg', flag='x-arg', shortcut='x', default=None,
+                        action='append', help=("Additional arguments consumed "
+                                               "by custom env.py scripts"))
+    @MigrateManager.command
+    @catch_errors
+    def upgrade(self, directory=None, revision='head', sql=False, tag=None, x_arg=None):
+        """Upgrade to a later version"""
+        config = self.migrate_config.migrate.get_config(directory,
+                                                                      x_arg=x_arg)
+        command.upgrade(config, revision, sql=sql, tag=tag)
 
-@MigrateCommand.arg('rev_id', flag='rev-id', default=None,
-                    help=('Specify a hardcoded revision id instead of generating one'))
-@MigrateCommand.arg('branch_label', flag='branch-label', default=None,
-                    help=('Specify a branch label to apply to the new revision'))
-@MigrateCommand.arg('message', flag='message', shortcut='m', default=None,
-                    help='Revision message')
-@MigrateCommand.arg('revisions', nargs='+',
-                    help='one or more revisions, or "heads" for all heads')
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def merge(directory=None, revisions='', message=None, branch_label=None,
-          rev_id=None):
-    """Merge two revisions together.  Creates a new migration file"""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    command.merge(config, revisions, message=message,
-                  branch_label=branch_label, rev_id=rev_id)
+    @MigrateManager.arg('tag', flag='tag', default=None,
+                        help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
+    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+                        help=("Don't emit SQL to database - dump to standard output instead"))
+    @MigrateManager.arg('revision', nargs='?', default="-1",
+                        help="revision identifier")
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.arg('x_arg', flag='x-arg', shortcut='x', default=None,
+                        action='append', help=("Additional arguments consumed "
+                                               "by custom env.py scripts"))
+    @MigrateManager.command
+    @catch_errors
+    def downgrade(self, directory=None, revision='-1', sql=False, tag=None, x_arg=None):
+        """Revert to a previous version"""
+        config = self.migrate_config.migrate.get_config(directory,
+                                                                      x_arg=x_arg)
+        if sql and revision == '-1':
+            revision = 'head:-1'
+        command.downgrade(config, revision, sql=sql, tag=tag)
 
+    @MigrateManager.arg('revision', nargs='?', default="head",
+                        help="revision identifier")
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def show(self, directory=None, revision='head'):
+        """Show the revision denoted by the given symbol."""
+        config = self.migrate_config.migrate.get_config(directory)
+        command.show(config, revision)
 
-@MigrateCommand.arg('tag', flag='tag', default=None,
-                    help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
-@MigrateCommand.arg('sql', flag='sql', action='store_true', default=False,
-                    help=("Don't emit SQL to database - dump to standard output instead"))
-@MigrateCommand.arg('revision', nargs='?', default='head',
-                    help="revision identifier")
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@MigrateCommand.arg('x_arg', flag='x-arg', shortcut='x', default=None,
-                    action='append', help=("Additional arguments consumed "
-                                           "by custom env.py scripts"))
-@catch_errors
-def upgrade(directory=None, revision='head', sql=False, tag=None, x_arg=None):
-    """Upgrade to a later version"""
-    config = current_app.extensions['migrate'].migrate.get_config(directory,
-                                                                  x_arg=x_arg)
-    command.upgrade(config, revision, sql=sql, tag=tag)
+    @MigrateManager.arg('indicate_current', flag='indicate-current', shortcut='i',
+                        action='store_true', default=False,
+                        help=('Indicate current version (Alembic 0.9.9 or greater is required)'))
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+                        default=False, help='Use more verbose output')
+    @MigrateManager.arg('rev_range', flag='rev-range', shortcut='r', default=None,
+                        help=('Specify a revision range; format is [start]:[end]'))
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def history(self, directory=None, rev_range=None, verbose=False,
+                indicate_current=False):
+        """List changeset scripts in chronological order."""
+        config = self.migrate_config.migrate.get_config(directory)
+        if alembic_version >= (0, 9, 9):
+            command.history(config, rev_range, verbose=verbose,
+                            indicate_current=indicate_current)
+        else:
+            command.history(config, rev_range, verbose=verbose)
 
+    @MigrateManager.arg('resolve_dependencies', flag='resolve-dependencies', action='store_true',
+                        default=False, help='Treat dependency versions as down revisions')
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+                        default=False, help='Use more verbose output')
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def heads(self, directory=None, verbose=False, resolve_dependencies=False):
+        """Show current available heads in the script directory"""
+        config = self.migrate_config.migrate.get_config(directory)
+        command.heads(config, verbose=verbose,
+                      resolve_dependencies=resolve_dependencies)
 
-@MigrateCommand.arg('tag', flag='tag', default=None,
-                    help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
-@MigrateCommand.arg('sql', flag='sql', action='store_true', default=False,
-                    help=("Don't emit SQL to database - dump to standard output instead"))
-@MigrateCommand.arg('revision', nargs='?', default="-1",
-                    help="revision identifier")
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@MigrateCommand.arg('x_arg', flag='x-arg', shortcut='x', default=None,
-                    action='append', help=("Additional arguments consumed "
-                                           "by custom env.py scripts"))
-@catch_errors
-def downgrade(directory=None, revision='-1', sql=False, tag=None, x_arg=None):
-    """Revert to a previous version"""
-    config = current_app.extensions['migrate'].migrate.get_config(directory,
-                                                                  x_arg=x_arg)
-    if sql and revision == '-1':
-        revision = 'head:-1'
-    command.downgrade(config, revision, sql=sql, tag=tag)
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+                        default=False, help='Use more verbose output')
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def branches(self, directory=None, verbose=False):
+        """Show current branch points"""
+        config = self.migrate_config.migrate.get_config(directory)
+        command.branches(config, verbose=verbose)
 
+    @MigrateManager.arg('head_only', flag='head-only', action='store_true',
+                        default=False,
+                        help='Deprecated. Use --verbose for additional output')
+    @MigrateManager.arg('verbose', flag='verbose', shortcut='v', action='store_true',
+                        default=False, help='Use more verbose output')
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def current(self, directory=None, verbose=False, head_only=False):
+        """Display the current revision for each database."""
+        config = self.migrate_config.migrate.get_config(directory)
+        command.current(config, verbose=verbose, head_only=head_only)
 
-@MigrateCommand.arg('revision', nargs='?', default="head",
-                    help="revision identifier")
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def show(directory=None, revision='head'):
-    """Show the revision denoted by the given symbol."""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    command.show(config, revision)
-
-
-@MigrateCommand.arg('indicate_current', flag='indicate-current', shortcut='i', 
-                    action='store_true', default=False,
-                    help=('Indicate current version (Alembic 0.9.9 or greater is required)'))
-@MigrateCommand.arg('verbose', flag='verbose', shortcut='v', action='store_true',
-                    default=False, help='Use more verbose output')
-@MigrateCommand.arg('rev_range', flag='rev-range', shortcut='r', default=None,
-                    help=('Specify a revision range; format is [start]:[end]'))
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def history(directory=None, rev_range=None, verbose=False,
-            indicate_current=False):
-    """List changeset scripts in chronological order."""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    if alembic_version >= (0, 9, 9):
-        command.history(config, rev_range, verbose=verbose,
-                        indicate_current=indicate_current)
-    else:
-        command.history(config, rev_range, verbose=verbose)
-
-
-@MigrateCommand.arg('resolve_dependencies', flag='resolve-dependencies', action='store_true',
-                    default=False, help='Treat dependency versions as down revisions')
-@MigrateCommand.arg('verbose', flag='verbose', shortcut='v', action='store_true',
-                    default=False, help='Use more verbose output')
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def heads(directory=None, verbose=False, resolve_dependencies=False):
-    """Show current available heads in the script directory"""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    command.heads(config, verbose=verbose,
-                  resolve_dependencies=resolve_dependencies)
-
-
-@MigrateCommand.arg('verbose', flag='verbose', shortcut='v', action='store_true',
-                    default=False, help='Use more verbose output')
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def branches(directory=None, verbose=False):
-    """Show current branch points"""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    command.branches(config, verbose=verbose)
-
-
-@MigrateCommand.arg('head_only', flag='head-only', action='store_true',
-                    default=False,
-                    help='Deprecated. Use --verbose for additional output')
-@MigrateCommand.arg('verbose', flag='verbose', shortcut='v', action='store_true',
-                    default=False, help='Use more verbose output')
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def current(directory=None, verbose=False, head_only=False):
-    """Display the current revision for each database."""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    command.current(config, verbose=verbose, head_only=head_only)
-
-
-@MigrateCommand.arg('tag', flag='tag', default=None,
-                    help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
-@MigrateCommand.arg('sql', flag='sql', action='store_true', default=False,
-                    help=("Don't emit SQL to database - dump to standard output instead"))
-@MigrateCommand.arg('revision', default=None, help="revision identifier")
-@MigrateCommand.arg('directory', flag='directory', shortcut='d', default=None,
-                    help=("Migration script directory (default is 'migrations')"))
-@catch_errors
-def stamp(directory=None, revision='head', sql=False, tag=None):
-    """'stamp' the revision table with the given revision; don't run any
-    migrations"""
-    config = current_app.extensions['migrate'].migrate.get_config(directory)
-    command.stamp(config, revision, sql=sql, tag=tag)
+    @MigrateManager.arg('tag', flag='tag', default=None,
+                        help=("Arbitrary 'tag' name - can be used by custom env.py scripts"))
+    @MigrateManager.arg('sql', flag='sql', action='store_true', default=False,
+                        help=("Don't emit SQL to database - dump to standard output instead"))
+    @MigrateManager.arg('revision', default=None, help="revision identifier")
+    @MigrateManager.arg('directory', flag='directory', shortcut='d', default=None,
+                        help=("Migration script directory (default is 'migrations')"))
+    @MigrateManager.command
+    @catch_errors
+    def stamp(self, directory=None, revision='head', sql=False, tag=None):
+        """'stamp' the revision table with the given revision; don't run any
+        migrations"""
+        config = self.migrate_config.migrate.get_config(directory)
+        command.stamp(config, revision, sql=sql, tag=tag)
