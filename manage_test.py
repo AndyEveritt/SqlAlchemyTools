@@ -1,11 +1,11 @@
-from sqlalchemy_tools.migration import Manager, MigrateCommands, Migrate, MigrateManager
+from sqlalchemy_tools.migration import Manager, Migrate, migrate_manager
 from sqlalchemy_tools import Database
 
 
 db = Database('sqlite:///tmp.db')
 migrate = Migrate(db)
 
-MigrateCommands(migrate)
+migrate_manager.migrate_config = migrate
 
 
 class User(db.Model):
@@ -14,4 +14,4 @@ class User(db.Model):
 
 
 if __name__ == '__main__':
-    MigrateManager.main()
+    migrate_manager.main()
