@@ -23,8 +23,9 @@ class Repr(_Repr):
             return super(Repr, self).repr(obj)
 
     def repr_Base(self, obj, level):
-        return '<%s %s>' % (self._repr_class(obj, level),
-                            self._repr_attrs(obj, level))
+        class_repr = self._repr_class(obj, level)
+        attrs_repr = self._repr_attrs(obj, level)
+        return f'{class_repr}({attrs_repr})'
 
     def _repr_class(self, obj, level):
         return obj.__class__.__name__

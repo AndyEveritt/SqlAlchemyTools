@@ -6,6 +6,7 @@ from math import ceil
 from six import string_types
 from six.moves import range
 
+
 class Paginator:
     PER_PAGE = 10
     total_pages = 0
