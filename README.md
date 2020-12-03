@@ -34,6 +34,7 @@ pip install sqlalchemy-tools
   - Supports `include`, `exclude`, `only`
 
 # Contents
+
 - [SqlAlchemyTools](#sqlalchemytools)
 - [Installation](#installation)
 - [Features](#features)
@@ -70,6 +71,24 @@ pip install sqlalchemy-tools
       - [update(\*\*kwargs)](#updatekwargs)
       - [delete()](#delete)
       - [save()](#save)
+      - [to_dict()](#to_dict)
+      - [to_json()](#to_json)
+      - [is_valid()](#is_valid)
+      - [bulk_insert(mapping: List[Dict], \*\*kwargs)](#bulk_insertmapping-listdict-kwargs)
+      - [insert_dataframe(df: pd.DataFrame)](#insert_dataframedf-pddataframe)
+    - [db Methods Description](#db-methods-description)
+      - [init_app(app)](#init_appapp)
+      - [engine](#engine)
+      - [metadata](#metadata)
+      - [query](#query-1)
+      - [add(\*args, \*\*kwargs)](#addargs-kwargs)
+      - [flush(\*args, \*\*kwargs)](#flushargs-kwargs)
+      - [commit()](#commit)
+      - [rollback()](#rollback)
+      - [create_all()](#create_all)
+      - [drop_all()](#drop_all)
+      - [reflect(meta)](#reflectmeta)
+      - [get_dataframe(query)](#get_dataframequery)
       - [Method Chaining](#method-chaining)
       - [Aggegated selects](#aggegated-selects)
   - [With Web Application](#with-web-application)
@@ -80,6 +99,22 @@ pip install sqlalchemy-tools
   - [Migration](#migration-1)
     - [Setup](#setup)
     - [Usage](#usage)
+      - [help](#help-1)
+      - [init](#init)
+      - [revision](#revision)
+      - [migrate](#migrate)
+      - [edit](#edit)
+      - [upgrade](#upgrade)
+      - [downgrade](#downgrade)
+      - [stamp](#stamp)
+      - [current](#current)
+      - [history](#history)
+      - [show](#show)
+      - [merge](#merge)
+      - [heads](#heads)
+      - [branches](#branches)
+    - [Alter Sqlite](#alter-sqlite)
+      - [Complications](#complications)
     - [Configuration Callbacks](#configuration-callbacks)
 
 # Quick Overview:
@@ -166,6 +201,7 @@ SqlAlchemyTools configures Alembic in the proper way to work with your database 
 ### Create `manage.py`
 
 To support database migrations, you need to create a `manage.py` file.
+
 > The file can be called anything
 
 ```python
@@ -353,7 +389,8 @@ The default `db.Model` uses `from sqlalchemy_tools import BaseModel`. It can be 
 db = Database('sqlite://', base_cls=MyBaseModel)
 ```
 
-
+The BaseModel `__repr__` is formatted as:
+`ClassName(attr_name=attr_value, ...)`
 
 **BaseQuery**
 
@@ -448,6 +485,118 @@ A shortcut to `session.add` + `session.commit()`
 record = User.get(124)
 record.login = "Another one"
 record.save()
+```
+
+#### to_dict()
+
+Returns the model instance as a dictionary
+
+```python
+record = User.get(1234)
+record_dict = record.to_dict()
+```
+
+#### to_json()
+
+Returns the model instance as a JSON formatted string
+
+```python
+record = User.get(1234)
+record_json = record.to_json()
+```
+
+#### is_valid()
+
+Check whether the model instance will pass the database validation.
+
+A nested session is created and the object is committed, if the commit is successful then the session is rolledback and the method returns True, else the session is rollback and the method returns False
+
+```python
+user = User(login='abc', passw_hash='hash', profile_id=123)
+user.is_valid()
+```
+
+#### bulk_insert(mapping: List[Dict], \*\*kwargs)
+
+Insert a list of dictionarys to the database
+
+```python
+User.bulk_insert([{'name': 'Andy'},
+                  {'name': "Sam"}])
+```
+
+#### insert_dataframe(df: pd.DataFrame)
+
+Insert a Pandas dataframe into the database. Faster than `bulk_insert` if you already have you data in DataFrame format
+
+```python
+df = pd.DataFrame()
+... # fill df with data. Set ForeignKeys as the appropriate id, ignore relationship fields
+User.insert_dataframe(df)
+```
+
+---
+
+### db Methods Description
+
+#### init_app(app)
+
+This callback can be used to initialize an application for the
+use with this database setup. In a web application or a multithreaded
+environment, never use a database without initialize it first,
+or connections will leak.
+
+#### engine
+
+Gives access to the engine
+
+#### metadata
+
+Proxy for `db.Model.metadata`
+
+#### query
+
+Proxy for `db.session.query`
+
+#### add(\*args, \*\*kwargs)
+
+Proxy for `db.session.add`
+
+#### flush(\*args, \*\*kwargs)
+
+Proxy for `db.session.flush`
+
+#### commit()
+
+Proxy for `db.session.commit`
+
+#### rollback()
+
+Proxy for `db.session.rollback`
+
+#### create_all()
+
+Creates all tables
+
+#### drop_all()
+
+Drops all tables
+
+#### reflect(meta)
+
+Reflects tables from the database
+
+#### get_dataframe(query)
+
+Converts a query into a Pandas DataFrame
+
+```python
+query = User.query
+df = db.get_dataframe(query)
+
+# or
+
+df = db.get_dataframe(User.query.filter(User.name=='Dave'))
 ```
 
 ---
@@ -602,21 +751,13 @@ The `Migrate` class links the database and other configuration. The `migrate_man
 
 ```python
 from sqlalchemy_tools.migration import Migrate, migrate_manager
-from sqlalchemy_tools import Database
-
 
 # create/import your database
-db = Database('sqlite:///tmp.db')
+from my_database_module import db
 
 # create a `migrate` object that is linked to your database
 migrate = Migrate(db)
 migrate_manager.set_migrate(migrate)
-
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128))
-    surname = db.Column(db.String(128))
 
 
 if __name__ == '__main__':
@@ -627,70 +768,156 @@ if __name__ == '__main__':
 
 After the extension is initialized, the command-line options will be available with several sub-commands through the `manage.py` type script created. Below is a list of the available sub-commands:
 
+#### help
+
 ```
-    python manage.py --help
-        Shows a list of available commands.
+  python manage.py --help
 ```
+
+Shows a list of available commands.
+
+#### init
+
+Initializes migration support for the application. The optional --multidb enables migrations for multiple databases configured as Flask-SQLAlchemy binds.
+
 ```
-    python manage.py init [--multidb]
-        Initializes migration support for the application. The optional --multidb enables migrations for multiple databases configured as Flask-SQLAlchemy binds.
+  python manage.py init [--multidb]
 ```
+
+#### revision
+
+Creates an empty revision script. The script needs to be edited manually with the upgrade and downgrade changes. See Alembic’s documentation for instructions on how to write migration scripts. An optional migration message can be included.
+
 ```
-    python manage.py revision [--message MESSAGE] [--autogenerate] [--sql] [--head HEAD] [--splice] [--branch-label BRANCH_LABEL] [--version-path VERSION_PATH] [--rev-id REV_ID]
-        Creates an empty revision script. The script needs to be edited manually with the upgrade and downgrade changes. See Alembic’s documentation for instructions on how to write migration scripts. An optional migration message can be included.
+python manage.py revision [--message MESSAGE] [--autogenerate] [--sql] [--head HEAD] [--splice] [--branch-label BRANCH_LABEL] [--version-path VERSION_PATH] [--rev-id REV_ID]
 ```
+
+#### migrate
+
+Equivalent to revision --autogenerate. The migration script is populated with changes detected automatically. The generated script should to be reviewed and edited as not all types of changes can be detected automatically. This command does not make any changes to the database, just creates the revision script.
+
 ```
-    python manage.py migrate [--message MESSAGE] [--sql] [--head HEAD] [--splice] [--branch-label BRANCH_LABEL] [--version-path VERSION_PATH] [--rev-id REV_ID]
-        Equivalent to revision --autogenerate. The migration script is populated with changes detected automatically. The generated script should to be reviewed and edited as not all types of changes can be detected automatically. This command does not make any changes to the database, just creates the revision script.
+python manage.py migrate [--message MESSAGE] [--sql] [--head HEAD] [--splice] [--branch-label BRANCH_LABEL] [--version-path VERSION_PATH] [--rev-id REV_ID]
 ```
+
+#### edit
+
+Edit a revision script using $EDITOR.
+
 ```
-    python manage.py edit <revision>
-        Edit a revision script using $EDITOR.
+python manage.py edit <revision>
 ```
+
+#### upgrade
+
+Upgrades the database. If revision isn’t given then "head" is assumed.
+
 ```
-    python manage.py upgrade [--sql] [--tag TAG] [--x-arg ARG] <revision>
-        Upgrades the database. If revision isn’t given then "head" is assumed.
+python manage.py upgrade [--sql] [--tag TAG] [--x-arg ARG] <revision>
 ```
+
+#### downgrade
+
+Downgrades the database. If revision isn’t given then -1 is assumed.
+
 ```
-    python manage.py downgrade [--sql] [--tag TAG] [--x-arg ARG] <revision>
-        Downgrades the database. If revision isn’t given then -1 is assumed.
+python manage.py downgrade [--sql] [--tag TAG] [--x-arg ARG] <revision>
 ```
+
+#### stamp
+
+Sets the revision in the database to the one given as an argument, without performing any migrations.
+
 ```
-    python manage.py stamp [--sql] [--tag TAG] <revision>
-        Sets the revision in the database to the one given as an argument, without performing any migrations.
+python manage.py stamp [--sql] [--tag TAG] <revision>
 ```
+
+#### current
+
+Shows the current revision of the database.
+
 ```
-    python manage.py current [--verbose]
-        Shows the current revision of the database.
+python manage.py current [--verbose]
 ```
+
+#### history
+
+Shows the list of migrations. If a range isn’t given then the entire history is shown.
+
 ```
-    python manage.py history [--rev-range REV_RANGE] [--verbose]
-        Shows the list of migrations. If a range isn’t given then the entire history is shown.
+python manage.py history [--rev-range REV_RANGE] [--verbose]
 ```
+
+#### show
+
+Show the revision denoted by the given symbol.
+
 ```
-    python manage.py show <revision>
-        Show the revision denoted by the given symbol.
+python manage.py show <revision>
 ```
+
+#### merge
+
+Merge two revisions together. Creates a new revision file.
+
 ```
-    python manage.py merge [--message MESSAGE] [--branch-label BRANCH_LABEL] [--rev-id REV_ID] <revisions>
-        Merge two revisions together. Creates a new revision file.
+python manage.py merge [--message MESSAGE] [--branch-label BRANCH_LABEL] [--rev-id REV_ID] <revisions>
 ```
+
+#### heads
+
+Show current available heads in the revision script directory.
+
 ```
-    python manage.py heads [--verbose] [--resolve-dependencies]
-        Show current available heads in the revision script directory.
+python manage.py heads [--verbose] [--resolve-dependencies]
 ```
+
+#### branches
+
+Show current branch points.
+
 ```
-    python manage.py branches [--verbose]
-        Show current branch points.
+python manage.py branches [--verbose]
 ```
 
 Notes:
 
-* All commands also take a --directory DIRECTORY option that points to the directory containing the migration scripts. If this argument is omitted the directory used is migrations.
-* The default directory can also be specified as a directory argument to the Migrate constructor.
-* The --sql option present in several commands performs an ‘offline’ mode migration. Instead of executing the database commands the SQL statements that need to be executed are printed to the console.
-* Detailed documentation on these commands can be found in the Alembic’s command reference page.
+- All commands also take a --directory DIRECTORY option that points to the directory containing the migration scripts. If this argument is omitted the directory used is migrations.
+- The default directory can also be specified as a directory argument to the Migrate constructor.
+- The --sql option present in several commands performs an ‘offline’ mode migration. Instead of executing the database commands the SQL statements that need to be executed are printed to the console.
+- Detailed documentation on these commands can be found in the Alembic’s command reference page.
 
+### Alter Sqlite
+
+Sqlite does not support altering columns. A work around is to use `render_as_batch=True` when initialising the `Migrate` object.
+
+```python
+from sqlalchemy_tools.migration import Migrate, migrate_manager
+
+# create/import your database
+from my_database_module import db
+
+# create a `migrate` object that is linked to your database
+migrate = Migrate(db, render_as_batch=True)
+migrate_manager.set_migrate(migrate)
+```
+
+#### Complications
+
+There are situations where batch mode alone does not solve upgrade errors.
+
+A nasty type of issue occurs when the `ALTER TABLE` error occurs in the middle of a migration, after some operations were already applied. This could leave the database in an inconsistent state, where some changes from the migration script have been applied, but because of the error, the version is still pointing to the previous migration.
+
+To unblock a database after a partial migration was applied, follow these steps:
+
+- Determine which of the operations were applied
+- Delete everything from the `upgrade()` function
+- Edit the `downgrade()` function so that it only contains the reverse of the operations that were applied to your database
+- Run `python manage.py upgrade`. This is going to update the database version
+- Run `python manage.py downgrade`
+- Delete the migration script and try again with batch mode enabled
+
+Another common issue occurs when your table has unnamed constraints, which the batch mode process can't delete or modify because there is no way to refer to them by name. The Alembic documentation has some information on how to deal with unnamed constraints when using batch mode.
 
 ### Configuration Callbacks
 
@@ -704,4 +931,3 @@ def configure_alembic(config):
 ```
 
 Multiple configuration callbacks can be defined simply by decorating multiple functions. The order in which multiple callbacks are invoked is undetermined.
-

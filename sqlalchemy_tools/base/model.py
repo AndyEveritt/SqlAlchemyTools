@@ -39,14 +39,14 @@ class BaseModel(RepresentableBase):
             if not k.startswith('_'):
                 yield (k, getattr(self, k))
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         """
         Return an entity as dict
         :returns dict:
         """
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-    def to_json(self):
+    def to_json(self) -> str:
         """
         Convert the entity to JSON
         :returns str:
@@ -107,7 +107,7 @@ class BaseModel(RepresentableBase):
             self.db.rollback()
             raise
 
-    def is_valid(self, pk: str = 'id') -> bool:
+    def is_valid(self) -> bool:
         """ Takes an sqlalchemy orm object and will return True if it is valid """
         if not self._sa_instance_state.transient:
             raise ValueError("Can not validate existing objects")
