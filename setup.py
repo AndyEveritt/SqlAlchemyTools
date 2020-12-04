@@ -9,9 +9,9 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="SqlAlchemy_Tools",
-    version="0.1.0-b2",
-    include_package_data=True,
+    version="0.1.0-b3",
     packages=find_packages(),
+    include_package_data=True,
 
     install_requires=[
         "alembic==1.4.3",
@@ -29,7 +29,7 @@ setup(
 
     author="Andy Everitt",
     author_email="andreweveritt@e3d-online.com",
-    description="Wrapper to make using SqlAlchemy easier, thread safe, helper methods etc.",
+    description="SqlAlchemyTools provides similar functionality to Flask-SqlAlchemy & Flask-Migrate without being dependant on Flask.",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/AndyEveritt/SqlAlchemyTools",

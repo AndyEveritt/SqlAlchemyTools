@@ -1,6 +1,6 @@
 # SqlAlchemyTools
 
-SqlAlchemyTools is a tool that provides similar functionality to Flask_SqlAlchemy without being dependant on Flask.
+SqlAlchemyTools provides similar functionality to Flask-SqlAlchemy & Flask-Migrate without being dependant on Flask.
 
 # Installation
 
