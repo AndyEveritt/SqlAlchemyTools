@@ -44,6 +44,7 @@ class Migrate(object):
         self.alembic_ctx_kwargs = kwargs
         self.config = _MigrateConfig(
             self, self.db, **self.alembic_ctx_kwargs)
+        migrate_manager.migrate_config = self.config
         if app is not None and db is not None:
             self.init_app(app, db, directory)
 
@@ -120,9 +121,6 @@ class MigrateManager(Manager):
         if isinstance(value, _MigrateConfig):
             self._migrate_config = value
             return self.migrate_config
-
-    def set_migrate(self, migrate: Migrate):
-        self.migrate_config = migrate.config
 
 
 migrate_manager = MigrateManager()

@@ -157,7 +157,6 @@ db = Database('sqlite:///tmp.db')
 
 # create a `migrate` object that is linked to your database
 migrate = Migrate(db)
-migrate_manager.set_migrate(migrate)
 
 
 class User(db.Model):

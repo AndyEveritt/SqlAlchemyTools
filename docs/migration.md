@@ -37,7 +37,6 @@ from my_database_module import db
 
 # create a `migrate` object that is linked to your database
 migrate = Migrate(db)
-migrate_manager.set_migrate(migrate)
 
 
 if __name__ == '__main__':
@@ -179,7 +178,6 @@ from my_database_module import db
 
 # create a `migrate` object that is linked to your database
 migrate = Migrate(db, render_as_batch=True)
-migrate_manager.set_migrate(migrate)
 ```
 
 #### Complications
