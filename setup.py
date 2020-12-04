@@ -9,15 +9,21 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="SqlAlchemy_Tools",
-    version="0.1.0-b0",
+    version="0.1.0-b1",
     include_package_data=True,
     packages=find_packages(),
 
     install_requires=[
+        "alembic==1.4.3",
+        "arrow==0.17.0",
+        "flask-wtf==0.14.3",
+        "inflection==0.5.1",
+        "manage.py==0.2.10",
+        "pandas==1.1.4",
+        "pymysql==0.10.1",
+        "pg8000==1.16.6",
         "sqlalchemy==1.3.20",
         "sqlalchemy-repr==0.0.2",
-        "pandas==1.1.4",
-        "flask-wtf==0.14.3",
         "wtforms_alchemy==0.17.0",
     ],
 
