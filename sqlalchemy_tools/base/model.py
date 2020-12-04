@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 import arrow
 import inflection
 import pandas as pd
+from sqlalchemy.orm.query import Query
 import sqlalchemy_utils as sa_utils
 from sqlalchemy import *
 
@@ -30,6 +31,7 @@ class BaseModel(RepresentableBase):
     """
     __tablename__ = ModelTableNameDescriptor()
     __primary_key__ = "id"  # String
+    query: Query
 
     def __iter__(self):
         """Returns an iterable that supports .next()
