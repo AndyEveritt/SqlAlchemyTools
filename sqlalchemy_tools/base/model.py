@@ -8,8 +8,9 @@ import pandas as pd
 from sqlalchemy.orm.query import Query
 import sqlalchemy_utils as sa_utils
 from sqlalchemy import *
+from sqlalchemy_mixins import SerializeMixin, SmartQueryMixin
 
-from .repr import RepresentableBase
+from .repr import ReprMixin
 
 
 class ModelTableNameDescriptor:
@@ -25,10 +26,11 @@ class ModelTableNameDescriptor:
         return tablename
 
 
-class BaseModel(RepresentableBase):
+class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
     """
     Baseclass for custom user models.
     """
+    __abstract__ = True
     __tablename__ = ModelTableNameDescriptor()
     __primary_key__ = "id"  # String
     query: Query
@@ -40,13 +42,6 @@ class BaseModel(RepresentableBase):
         for k in self.__dict__.keys():
             if not k.startswith('_'):
                 yield (k, getattr(self, k))
-
-    def to_dict(self) -> Dict:
-        """
-        Return an entity as dict
-        :returns dict:
-        """
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def to_json(self) -> str:
         """
@@ -90,23 +85,25 @@ class BaseModel(RepresentableBase):
         """
         Shortcut to add and save + rollback
         """
+        save_point = self.db.session.begin_nested()
         try:
             self.db.add(self)
-            self.db.commit()
+            save_point.commit()
             return self
         except Exception as e:
-            self.db.rollback()
+            save_point.rollback()
             raise
 
     def delete(self):
         """
         Delete a record
         """
+        save_point = self.db.session.begin_nested()
         try:
-            self.db.session.delete(self)
-            return self.db.commit()
+            save_point.session.delete(self)
+            return save_point.commit()
         except Exception as e:
-            self.db.rollback()
+            save_point.rollback()
             raise
 
     def is_valid(self) -> bool:
@@ -145,8 +142,8 @@ class BaseModel(RepresentableBase):
         """
         save = cls.db.session.begin_nested()
         try:
-            cls.db.session.bulk_insert_mappings(cls, mappings, **kwargs)
-            cls.db.commit()
+            save.session.bulk_insert_mappings(cls, mappings, **kwargs)
+            save.commit()
             return True
         except Exception as e:
             save.rollback()

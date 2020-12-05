@@ -11,6 +11,7 @@ db = Database('sqlite://')
 
 class User(db.Model):
     __tablename__ = 'users'
+    __repr_attrs__ = '__all__'
     id = Column(Integer, primary_key=True)
     name = Column(String)
     fullname = Column(String, unique=True)
@@ -20,6 +21,7 @@ class User(db.Model):
 
 class Address(db.Model):
     __tablename__ = 'addresses'
+    __repr_attrs__ = '__all__'
     id = Column(Integer, primary_key=True)
     email_address = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
