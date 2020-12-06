@@ -11,6 +11,7 @@ from sqlalchemy import *
 from sqlalchemy_mixins import SerializeMixin, SmartQueryMixin
 
 from .repr import ReprMixin
+from .query import BaseQuery
 
 
 class ModelTableNameDescriptor:
@@ -33,7 +34,7 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
     __abstract__ = True
     __tablename__ = ModelTableNameDescriptor()
     __primary_key__ = "id"  # String
-    query: Query
+    query: BaseQuery
 
     def __iter__(self):
         """Returns an iterable that supports .next()

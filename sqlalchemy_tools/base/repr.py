@@ -6,6 +6,7 @@ from sqlalchemy_mixins import InspectionMixin
 class ReprMixin(InspectionMixin):
     __abstract__ = True
     __repr_attrs__ = []
+    __repr_exclude__ = []
     __repr_max_length__ = 15
 
     @property
@@ -14,6 +15,8 @@ class ReprMixin(InspectionMixin):
             return None
         pks = []
         for pk in self.primary_keys:
+            if pk in self.__repr_exclude__:
+                continue
             value = self._repr_attr(pk)
             pks.append(f"{pk}={value}")
 
@@ -41,7 +44,10 @@ class ReprMixin(InspectionMixin):
 
         values = []
         if self.__repr_attrs__ == '__all__':
-            self.__repr_attrs__ = [column for column in self.columns if column not in self.primary_keys]
+            self.__repr_attrs__ = [column for column in self.columns if (
+                column not in self.primary_keys and
+                column not in self.__repr_exclude__
+                )]
 
         for key in self.__repr_attrs__:
             value = self._repr_attr(key)
@@ -53,5 +59,6 @@ class ReprMixin(InspectionMixin):
         # get id like '#123'
         id_str = (self._id_str) if self._id_str else ''
         # join class name, id and repr_attrs
-        repr_attrs = ', '+self._repr_attrs_str if self._repr_attrs_str else ''
-        return f"<{self.__class__.__name__}({id_str}{repr_attrs})>"
+        repr_attrs = self._repr_attrs_str if self._repr_attrs_str else ''
+        repr_str = ', '.join(repr_str for repr_str in [id_str, repr_attrs] if repr_str != '')
+        return f"<{self.__class__.__name__}({repr_str})>"

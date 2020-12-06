@@ -29,5 +29,17 @@ class BaseQuery(Query):
     def paginate(self, **kwargs):
         """Paginate this results.
         Returns an :class:`Paginator` object.
+        - param query: Iterable to paginate. Can be a query object, list or any iterables
+        - param page: current page
+        - param per_page: max number of items per page
+        - param total: Max number of items. If not provided, it will use the query to count
+        - param padding: Number of elements of the next page to show
+        - param callback: a function to callback on each item being iterated.
+        - param static_query: bool - When True it will return the query as is , without slicing/limit. Usally when using the paginator to just create the pagination.
+        # To customize the pagination
+        - param left_edge:
+        - param left_current:
+        - param right_current:
+        - param right_edge:
         """
         return Paginator(self, **kwargs)
