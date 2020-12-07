@@ -1,18 +1,19 @@
 import argparse
-from functools import wraps
+import io
 import logging
 import os
+import platform
 import sys
-import io
+from functools import wraps
+
+import graphviz
+import sadisplay.reflect
+from alembic import __version__ as __alembic_version__
+from alembic import command
+from alembic.config import Config as AlembicConfig
+from alembic.util import CommandError
 from flask import current_app
 from manager import Manager
-from alembic import __version__ as __alembic_version__
-from alembic.config import Config as AlembicConfig
-from alembic import command
-from alembic.util import CommandError
-from sadisplay.reflect import run
-from sadisplay.render import plantuml, dot
-import graphviz
 
 alembic_version = tuple([int(v) for v in __alembic_version__.split('.')[0:3]])
 log = logging.getLogger(__name__)
@@ -393,21 +394,22 @@ def stamp(directory=None, revision='head', sql=False, tag=None):
     command.stamp(config, revision, sql=sql, tag=tag)
 
 
-@migrate_manager.arg('url', flag='url', shortcut='u', nargs='?', required=True, help='Database URL (connection string)')
+@migrate_manager.arg('url', flag='url', shortcut='u', nargs='?', help='Database URL (connection string)')
 @migrate_manager.arg('render', flag='render', shortcut='r', default='dot', choices=['plantuml', 'dot'], help='Output format')
 @migrate_manager.arg('list', flag='list', shortcut='l', default=False, type=bool, help='Output database list of tables and exit')
 @migrate_manager.arg('include', flag='include', shortcut='i', default=None, help='List of tables to include through ","')
 @migrate_manager.arg('exclude', flag='exclude', shortcut='e', default=None, help='List of tables to exlude through ","')
 @migrate_manager.arg('output', flag='output', shortcut='o', default='graph', help='Output path for graph')
+@migrate_manager.arg('format', flag='format', shortcut='f', default='png', help='Format for output graph')
 @migrate_manager.command
 @catch_errors
-def graph(url, render, list, include, exclude, output):
+def graph(url, render, list, include, exclude, output, format):
+    if platform.system() == 'Windows':
+        raise SystemError("Not currently implemented on Windows")
     print(f"Graphing database {url}")
     stdout = io.StringIO()
     sys.stdout = stdout
-    run()
+    sadisplay.reflect.run()
     desc = stdout.getvalue()
     dot = graphviz.Source(desc, filename=output)
-    dot.render(view=True, cleanup=True, format='png')
-    pass
-
+    dot.render(view=True, cleanup=True, format=format)
