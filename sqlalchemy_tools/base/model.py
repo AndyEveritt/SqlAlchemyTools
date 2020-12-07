@@ -86,26 +86,24 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         """
         Shortcut to add and save + rollback
         """
-        save_point = self.db.session.begin_nested()
         try:
-            self.db.add(self)
-            self.db.commit()
-            return self
+            with self.db.session.begin_nested():
+                self.db.add(self)
         except Exception as e:
-            save_point.rollback()
             raise
+        self.db.commit()
+        return self
 
     def delete(self):
         """
         Delete a record
         """
-        save_point = self.db.session.begin_nested()
         try:
-            self.db.session.delete(self)
-            return self.db.commit()
+            with self.db.session.begin_nested():
+                self.db.session.delete(self)
         except Exception as e:
-            save_point.rollback()
             raise
+        return self.db.commit()
 
     def is_valid(self) -> bool:
         """ Takes an sqlalchemy orm object and will return True if it is valid """
@@ -141,13 +139,12 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
 
         Not as fast as `insert_dataframe()` but can be faster than converting list to DataFrame then inserting
         """
-        save = cls.db.session.begin_nested()
         try:
-            cls.db.session.session.bulk_insert_mappings(cls, mappings, **kwargs)
+            with cls.db.session.begin_nested():
+                cls.db.session.session.bulk_insert_mappings(cls, mappings, **kwargs)
             cls.db.session.commit()
             return True
         except Exception as e:
-            save.rollback()
             raise e
 
     @classmethod

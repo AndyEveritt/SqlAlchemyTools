@@ -34,25 +34,35 @@ class Address(db.Model):
     user = relationship("User", back_populates="addresses")
 
 
-db.create_all()    # only required if not using alembic or using a database in memory
+if __name__ == '__main__':
+    db.create_all()    # only required if not using alembic or using a database in memory
 
-u1 = User.create(name='Dave', fullname='Dave Smith', nickname='Davo')
-u2 = User.create(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
+    u1 = User.create(name='Dave', fullname='Dave Smith', nickname='Davo')
+    u2 = User(name='Dave', fullname='Dave Owen', nickname='Dav Machine')
 
-User.bulk_insert([{'name': 'Andy'}, {'name': "Sam"}])
-User(name='Dave', fullname='Dave Owen2', nickname=1).is_valid()
+    db.add(u2)
 
-df = db.get_dataframe(User.query)
-df.pop('id')
+    try:
+        User.create(name='Dave', fullname='Dave Smith', nickname='Davo')
+    except:
+        print(f"Failed to create user")
+
+    db.commit()
+
+    User.bulk_insert([{'name': 'Andy'}, {'name': "Sam"}])
+    User(name='Dave', fullname='Dave Owen2', nickname=1).is_valid()
+
+    df = db.get_dataframe(User.query)
+    df.pop('id')
 
 
-users = User.query.paginate(page=2, per_page=2)
-print(list(users))
-User.insert_dataframe(df)
+    users = User.query.paginate(page=2, per_page=2)
+    print(list(users))
+    User.insert_dataframe(df)
 
-User.get(1)
-q = User.query()
+    User.get(1)
+    q = User.query()
 
-u3 = db.get_or_create(User, {'name': 'Simon'})
-User.query.all()
-pass
+    u3 = db.get_or_create(User, {'name': 'Simon'})
+    User.query.all()
+    pass
