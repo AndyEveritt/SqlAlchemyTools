@@ -89,7 +89,7 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         save_point = self.db.session.begin_nested()
         try:
             self.db.add(self)
-            save_point.commit()
+            self.db.commit()
             return self
         except Exception as e:
             save_point.rollback()
@@ -101,8 +101,8 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         """
         save_point = self.db.session.begin_nested()
         try:
-            save_point.session.delete(self)
-            return save_point.commit()
+            self.db.session.delete(self)
+            return self.db.commit()
         except Exception as e:
             save_point.rollback()
             raise
@@ -143,8 +143,8 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         """
         save = cls.db.session.begin_nested()
         try:
-            save.session.bulk_insert_mappings(cls, mappings, **kwargs)
-            save.commit()
+            cls.db.session.session.bulk_insert_mappings(cls, mappings, **kwargs)
+            cls.db.session.commit()
             return True
         except Exception as e:
             save.rollback()
