@@ -9,6 +9,7 @@ from sqlalchemy.orm.query import Query
 import sqlalchemy_utils as sa_utils
 from sqlalchemy import *
 from sqlalchemy_mixins import SerializeMixin, SmartQueryMixin
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from .repr import ReprMixin
 from .query import BaseQuery
@@ -73,6 +74,23 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         record = cls(**kwargs).save()
         return record
 
+    @classmethod
+    def get_or_create(cls, **kwargs):
+        """
+        Filter class by kwargs, if no matching instance found, instance will be created.
+        If ONE instance is found, it will be returned.
+        If multiple instances found, raise MultipleResultsFound
+        """
+        query = cls.query.filter_by(**kwargs)
+        try:
+            result = query.one()
+        except NoResultFound:
+            result = cls.create(**kwargs)
+        except MultipleResultsFound:
+            raise
+
+        return result
+
     def update(self, **kwargs):
         """
         Update an entry
@@ -84,7 +102,7 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
 
     def save(self):
         """
-        Shortcut to add and save + rollback
+        Shortcut to add and commit + rollback
         """
         try:
             with self.db.session.begin_nested():
