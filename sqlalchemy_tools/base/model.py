@@ -63,7 +63,8 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         Select entry by its primary key. It must be define as
         __primary_key__ (string)
         """
-        return cls.query.filter(getattr(cls, cls.__primary_key__) == pk).first()
+        obj: cls = cls.query.filter(getattr(cls, cls.__primary_key__) == pk).first()
+        return obj
 
     @classmethod
     def create(cls, **kwargs):
@@ -83,7 +84,7 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         """
         query = cls.query.filter_by(**kwargs)
         try:
-            result = query.one()
+            result: cls = query.one()
         except NoResultFound:
             result = cls.create(**kwargs)
         except MultipleResultsFound:
