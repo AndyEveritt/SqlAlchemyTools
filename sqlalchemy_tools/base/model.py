@@ -160,7 +160,7 @@ class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
         """
         try:
             with cls.db.session.begin_nested():
-                cls.db.session.session.bulk_insert_mappings(cls, mappings, **kwargs)
+                cls.db.session.bulk_insert_mappings(cls, mappings, **kwargs)
             cls.db.session.commit()
             return True
         except Exception as e:
