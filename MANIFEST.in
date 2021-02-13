@@ -1,0 +1,1 @@
+include LICENSE sqlalchemy_tools/migration/templates/default/*

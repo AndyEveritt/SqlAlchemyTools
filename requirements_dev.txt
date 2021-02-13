@@ -1,2 +1,4 @@
 twine
 wheel
+autopep8
+pip-check
