@@ -11,6 +11,7 @@
     - [query](#query)
     - [get(id)](#getid)
     - [create(\*\*kwargs)](#createkwargs)
+    - [get_or_create(\*\*kwargs)](#get_or_createkwargs)
     - [update(\*\*kwargs)](#updatekwargs)
     - [delete()](#delete)
     - [save()](#save)
@@ -208,6 +209,17 @@ db.add(record)
 db.commit()
 print (record.login) # -> abc
 ```
+
+#### get_or_create(\*\*kwargs)
+
+A method that will first try to filter by the provided kwargs. If exactly 1 match is found then it is returned, if no matches are found then a new instance is created. If multiple matches are found, a `MultipleResultsFound` error is raised.
+
+```python
+record = User.get_or_create(login='abc', passw_hash='hash', profile_id=123)
+print (record.login) # -> abc
+```
+
+*There is no direct feedback on whether the returned object was got or created*
 
 #### update(\*\*kwargs)
 

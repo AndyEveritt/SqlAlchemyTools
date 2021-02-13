@@ -49,6 +49,8 @@ pip install sqlalchemy-tools
     - [Update record from query iteration](#update-record-from-query-iteration)
     - [Delete a record](#delete-a-record)
     - [Query with filter](#query-with-filter)
+    - [SqlAlchemy Mixins](#sqlalchemy-mixins)
+    - [Repr](#repr)
   - [Migration](#migration)
     - [Why use SqlAlchemyTools migration vs. Alembic directly](#why-use-sqlalchemytools-migration-vs-alembic-directly)
     - [Create `manage.py`](#create-managepy)
@@ -132,6 +134,24 @@ all = User.query.filter(User.location == "USA")
 for user in users:
     ...
 ```
+
+### SqlAlchemy Mixins
+
+A number of other very useful methods are provided by the [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins) library.
+
+The `SerializeMixin` and `SmartQueryMixin` are included in the base model by default.
+
+### Repr
+
+The `BaseModel` has a default `__repr__` to provide a human readable representation of the model object.
+
+The default `__repr__` will display `ModelName(id=id_value)`
+
+If you want to change which columns are displayed by the repr then you will need to set some class variables on your Model.
+
+- `__repr_attrs__`: if set to `__all__` then all columns (apart from any excluded) will be included in the repr. If only some columns need to be displayed then set this to a list of the column names you want to include.
+- `__repr_exclude__`: list of the columns you want to specifically exclude if setting `__repr_attrs__` to `__all__`. Primary keys are always included unless explicitly excluded here.
+- `__repr_max_length__`: the max length of a column value before it is cropped.
 
 ## Migration
 
@@ -233,5 +253,3 @@ Complete guides for the different modules can be found below:
 
 - [Database](docs/database.md)
 - [Migration](docs/migration.md)
-
-
