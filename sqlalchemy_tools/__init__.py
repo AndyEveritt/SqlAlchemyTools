@@ -1,4 +1,4 @@
-__version__ = "0.1.1-b0"
+__version__ = "0.1.1"
 
 from .database import Database, BaseModel, BaseQuery
 from .migration import Migrate, migrate_manager
