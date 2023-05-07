@@ -8,6 +8,7 @@ import pandas as pd
 from sqlalchemy.orm.query import Query
 import sqlalchemy_utils as sa_utils
 from sqlalchemy import *
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy_mixins import SerializeMixin, SmartQueryMixin
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
@@ -28,13 +29,15 @@ class ModelTableNameDescriptor:
         return tablename
 
 
-class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin):
+class BaseModel(ReprMixin, SerializeMixin, SmartQueryMixin, DeclarativeBase):
     """
     Baseclass for custom user models.
     """
     __abstract__ = True
     __tablename__ = ModelTableNameDescriptor()
     __primary_key__ = "id"  # String
+    __repr_attrs__ = '__all__'
+    __repr_max_length__ = 40
     query: BaseQuery
 
     def __iter__(self):

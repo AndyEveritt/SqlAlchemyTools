@@ -116,14 +116,14 @@ class Database(object):
             pool_size=pool_size,
             pool_timeout=pool_timeout,
             pool_recycle=pool_recycle,
-            convert_unicode=convert_unicode,
+            # convert_unicode=convert_unicode,
         )
 
         self.connector = None
         self._engine_lock = threading.Lock()
         self.session = _create_scoped_session(self, query_cls=query_cls)
 
-        self.Model: base_cls = declarative_base(cls=base_cls, name='Model')
+        self.Model: base_cls = base_cls
 
         self.Model.db = self
         self.Model.query = self.session.query_property()
