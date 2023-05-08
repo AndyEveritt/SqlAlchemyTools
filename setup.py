@@ -9,7 +9,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="SqlAlchemy_Tools",
-    version="0.1.1",
+    version="0.2.0",
     packages=find_packages(),
     include_package_data=True,
 
