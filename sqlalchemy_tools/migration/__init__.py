@@ -13,7 +13,7 @@ from alembic import command
 from alembic.config import Config as AlembicConfig
 from alembic.util import CommandError
 from flask import current_app
-from manager import Manager
+from .manager import Manager
 
 alembic_version = tuple([int(v) for v in __alembic_version__.split('.')[0:3]])
 log = logging.getLogger(__name__)
